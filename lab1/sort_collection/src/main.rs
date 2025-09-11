@@ -12,7 +12,6 @@ use std::io::Write;
 use std::time::Instant;
 use std::{cmp::Ordering, hint::black_box};
 
-const NUM_MEASURES: u64 = 10_000;
 const ARRAY_SIZE: u64 = 1_000_000;
 
 fn main() {
@@ -36,7 +35,7 @@ fn measure_time<T>(arr: &mut Vec<T>, cmp: fn(&T, &T) -> Ordering) -> f64 {
 
 fn measure_f64(pool: &ThreadPool) -> Vec<f64> {
     pool.install(|| {
-        (0..NUM_MEASURES)
+        (0..100_000)
             .into_par_iter()
             .map(|i| {
                 let mut rng = rand::rngs::StdRng::seed_from_u64(i);
@@ -52,7 +51,7 @@ fn measure_f64(pool: &ThreadPool) -> Vec<f64> {
 
 fn measure_string(pool: &ThreadPool) -> Vec<f64> {
     pool.install(|| {
-        (0..NUM_MEASURES)
+        (0..10_000)
             .into_par_iter()
             .map(|i| {
                 let mut rng = rand::rngs::StdRng::seed_from_u64(i);
