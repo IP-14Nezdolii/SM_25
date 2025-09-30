@@ -1,9 +1,12 @@
+use std::fmt;
+
 #[derive(Clone, Debug)]
 pub struct Device {
     current_time: f64,
     required_time: Option<f64>,
 
     rand: DeviceRand,
+    stats: DeviceStats,
 }
 
 impl Device {
@@ -11,8 +14,12 @@ impl Device {
         Device {
             current_time: 0.0,
             required_time: None,
-
-            rand,
+            rand: rand,
+            stats: DeviceStats {
+                busy_time: 0.0,
+                total_time: 0.0,
+                processed: 0,
+            },
         }
     }
 
@@ -28,12 +35,30 @@ impl Device {
         match self.required_time {
             Some(t) => {
                 self.current_time += time;
+
                 if self.current_time >= t {
+
+                    // stats
+                    self.stats.add_processed();
+                    self.stats.add_busy_time(t - (self.current_time - time));
+
+                    // change state
                     self.current_time = 0.0;
                     self.required_time = None;
+                } else {
+                    self.stats.add_busy_time(time);
                 }
             },
             None => panic!("Device is not busy"),
+        }
+    }
+
+    pub fn wait(&mut self, time: f64) {
+        self.stats.add_wait_time(time);
+
+        match self.required_time {
+            Some(_) => panic!("Device is busy"),
+            None => return,
         }
     }
 
@@ -46,12 +71,17 @@ impl Device {
             },
         }
     }
+
+    pub fn get_stats(&self) -> DeviceStats {
+        self.stats.clone()
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum DeviceRand {
     Exponential(f64),
     Uniform(f64, f64),
+    Fixed(f64)
 }
 
 impl DeviceRand {
@@ -63,12 +93,48 @@ impl DeviceRand {
 
         match self {
             DeviceRand::Exponential(lambda) => {
-                    - (1.0 / lambda) * n.ln()
-                },
+                - (1.0 / lambda) * n.ln()
+            },
             DeviceRand::Uniform(a, b) => {
-                    a + (b - a) * n
-                },
+                a + (b - a) * n
+            },
+            DeviceRand::Fixed(a) => {
+                *a
+            },
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct DeviceStats {
+    busy_time: f64,
+    total_time: f64,
+    processed: usize,
+}
+
+impl DeviceStats {
+    pub fn add_busy_time(&mut self, time: f64) {
+        self.busy_time += time;
+        self.total_time += time;
+    }
+
+    pub fn add_wait_time(&mut self, time: f64) {
+        self.total_time += time;
+    }
+
+    pub fn add_processed(&mut self) {
+        self.processed += 1;
+    }
+}
+
+impl fmt::Debug for DeviceStats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "DeviceStats {{")?;
+        writeln!(f, "   busy_time: {:?}", self.busy_time)?;
+        writeln!(f, "   total_time: {:?}", self.total_time)?;
+        writeln!(f, "   processed: {:?}", self.processed)?;
+        writeln!(f, "   utilization: {:?}", self.busy_time / self.total_time)?;
+        writeln!(f, "}}")
     }
 }
 

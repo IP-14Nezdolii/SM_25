@@ -2,39 +2,51 @@ use std::cell::{Ref, RefMut};
 use std::rc::Weak;
 use std::{cell::RefCell, rc::Rc};
 use std::any::type_name;
-use crate::modeling::device::Device;
+use crate::modeling::device::{Device};
 
 pub trait Process {
     fn get_work_time(&self) -> Option<f64>;
-
     fn process(&mut self) -> bool;
 
-    fn set_next(&mut self, next: SharedProcess);
+    /// Must be downgraded to avoid cyclic references
+    fn add_next(&mut self, next: SharedProcess, priority: u16);
+
+    /// Must be downgraded to avoid cyclic references
     fn set_if_failure(&mut self, proc: SharedProcess);
 
-    fn get_base(&mut self) -> &mut ProcessBase;
+    fn get_base(&self) -> &ProcessBase;
+    fn get_mut_base(&mut self) -> &mut ProcessBase;
+
+    /// Next chosen process
     fn get_next(&self) -> Option<SharedProcess>;
+
+    fn get_all_next(&self) -> Vec<SharedProcess>;
     fn get_if_failure(&self) -> Option<SharedProcess>;
     
     fn measure_stats(&mut self);
     fn print_stats(&self);
+
+    /// Must be unique for each process
+    fn get_id(&self) -> usize {
+        self.get_base().get_id()
+    }
 
     fn to_shared(self) -> SharedProcess where Self: Sized + 'static {
         SharedProcess::new(Box::new(self))
     }
 
     fn run(&mut self, time: f64) {
-        let processed = self.get_base().run(time);
+        let processed = self.get_mut_base().run(time);
 
-        if let Some(next) = self.get_next() {
-            for _ in 0..processed {
+        for _ in 0..processed {
+            if let Some(next) = self.get_next() {
                 next.borrow_mut().process();
             }
         }
     }
 
     fn add_device(&mut self, device: Device) {
-        self.get_base().add_device(device);
+        self.get_mut_base().add_device(device);
     }
 }
 
@@ -85,30 +97,29 @@ impl WeakSharedProcess {
 }
 
 pub struct ProcessBase {
-    queue_capacity: i32,
-    queue_size: i32,
+    queue_capacity: usize,
+    queue_size: usize,
 
     devices: Vec<Device>,
  
-    queue_sizies: Vec<i32>,
-    number_of_requests: i32,
-    failures: i32,
-    processed: i32,
+    stats: ProcessStats,
 }
 
 impl ProcessBase {
     pub fn new(
-        queue_capacity: i32,
+        queue_capacity: usize,
     ) -> Self {
         ProcessBase {
             queue_capacity: queue_capacity,
             queue_size: 0,
             devices: Vec::new(),
-
-            queue_sizies: Vec::new(),
-            number_of_requests: 0,
-            failures: 0,
-            processed: 0,
+            stats:  ProcessStats {
+                queue_sizies: Vec::new(), 
+                requests_number: 0,
+                failures: 0, 
+                processed: 0, 
+                total_wait_time: 0.0 
+            }
         }
     }
 
@@ -129,7 +140,7 @@ impl ProcessBase {
             })
     }
 
-    pub fn run(&mut self, time: f64) -> i32 {
+    pub fn run(&mut self, time: f64) -> usize {
         assert!(
             !self.devices.is_empty(), 
             "No devices in process {}", type_name::<Self>()
@@ -144,6 +155,10 @@ impl ProcessBase {
                 if self.queue_size > 0 {
                     self.queue_size -= 1;
                     device.process();
+                // if load failed, wait
+                } else {
+                    device.wait(time);
+                    continue;
                 }
             }
 
@@ -160,15 +175,22 @@ impl ProcessBase {
                 }
 
                 // count of processed requests
-                self.processed += result;
+                self.stats.add_processed(result);
             }
         }
+
+        // total wait time in queue
+        self.stats.add_wait_time(self.queue_size as f64 * time);
 
         result
     }
 
+    pub fn get_id(&self) -> usize {
+        self as *const Self as usize
+    }
+
     pub fn process(&mut self) -> bool {
-        self.number_of_requests += 1;
+        self.stats.add_request();
 
         for device in self.devices.iter_mut() {
             if device.get_work_time().is_none() {
@@ -182,30 +204,71 @@ impl ProcessBase {
             
             return true;
         } else {
-            self.failures += 1;
+            self.stats.add_failures();
             return false;
         }
     }
 
     pub fn measure_stats(&mut self) {
-        self.queue_sizies.push(self.queue_size);
+        self.stats.add_queue_size(self.queue_size);
     }
 
     pub fn print_stats(&self) {
+        self.stats.print(&self.devices);
+    }
+}
+
+pub struct ProcessStats {
+    queue_sizies: Vec<usize>,
+    requests_number: usize,
+    failures: usize,
+    processed: usize,
+
+    total_wait_time: f64,
+}
+
+impl ProcessStats {
+    pub fn add_queue_size(&mut self, queue_size: usize) {
+        self.queue_sizies.push(queue_size);
+    }
+
+    pub fn add_request(&mut self) {
+        self.requests_number += 1;
+    }
+
+    pub fn add_failures(&mut self) {
+        self.failures += 1;
+    }
+
+    pub fn add_processed(&mut self, processed: usize) {
+        self.processed += processed;
+    }
+
+    pub fn add_wait_time(&mut self, time: f64) {
+        self.total_wait_time += time;
+    }
+
+    fn print(&self, devices: &Vec<Device>) {
         let avg_queue_size = self.queue_sizies.iter()
-            .sum::<i32>() as f64 / self.queue_sizies.len() as f64;
+            .sum::<usize>() as f64 / self.queue_sizies.len() as f64;
 
-        let failure_probability = self.failures as f64 / self.number_of_requests as f64;
-        let throughput = self.processed as f64 / self.number_of_requests as f64;
+        let failure_probability = self.failures as f64 / self.requests_number as f64;
+        let throughput = self.processed as f64 / self.requests_number as f64;
 
-        println!("--- Process Stats ---");
+        println!("Number of devices: {:?}", devices.len());
 
-        println!("Number of requests: {}", self.number_of_requests);
-        println!("Number of failures: {}", self.failures);
-        println!("Number of processed: {}", self.processed);
+        println!("total requests number: {:?}", self.requests_number);
+        println!("failures: {:?}", self.failures);
+        println!("processed: {:?}", self.processed);
+        println!("failure probability: {:?}", failure_probability);
 
-        println!("Avg queue size: {}", avg_queue_size);
-        println!("Failure probability: {}", failure_probability);
-        println!("Throughput: {}", throughput);
+        println!("total wait time: {:?}", self.total_wait_time);
+        println!("avg queue size: {:?}", avg_queue_size);
+        println!("avg waiting time: {:?}", self.total_wait_time / self.requests_number as f64);
+        println!("throughput: {:?}", throughput);
+
+        for device in devices.iter() {
+            println!("{:?}", device.get_stats());
+        }
     }
 }
