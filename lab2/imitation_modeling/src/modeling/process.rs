@@ -161,23 +161,15 @@ impl ProcessBase {
                     continue;
                 }
             }
-
             device.run(time);
 
             // if resourse is processed
             if device.get_work_time().is_none() {
                 result += 1;
-
-                // load new resourse to device
-                if self.queue_size > 0 {
-                    self.queue_size -= 1;
-                    device.process();
-                }
-
-                // count of processed requests
-                self.stats.add_processed(result);
             }
         }
+        // count of processed requests
+        self.stats.add_processed(result);
 
         // total wait time in queue
         self.stats.add_wait_time(self.queue_size as f64 * time);

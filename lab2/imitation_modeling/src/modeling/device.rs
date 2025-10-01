@@ -37,10 +37,10 @@ impl Device {
                 self.current_time += time;
 
                 if self.current_time >= t {
-
                     // stats
                     self.stats.add_processed();
                     self.stats.add_busy_time(t - (self.current_time - time));
+                    self.stats.add_wait_time(self.current_time - t);
 
                     // change state
                     self.current_time = 0.0;
@@ -48,18 +48,18 @@ impl Device {
                 } else {
                     self.stats.add_busy_time(time);
                 }
-            },
+            }
             None => panic!("Device is not busy"),
         }
     }
 
+    /// Panics if device is busy
     pub fn wait(&mut self, time: f64) {
-        self.stats.add_wait_time(time);
-
-        match self.required_time {
-            Some(_) => panic!("Device is busy"),
-            None => return,
+        if self.required_time.is_some() {
+            panic!("Device is busy");
         }
+
+        self.stats.add_wait_time(time);
     }
 
     pub fn process(&mut self) {
@@ -68,7 +68,7 @@ impl Device {
             None => {
                 self.required_time = Some(self.rand.next_rand());
                 self.current_time = 0.0;
-            },
+            }
         }
     }
 
@@ -81,26 +81,22 @@ impl Device {
 pub enum DeviceRand {
     Exponential(f64),
     Uniform(f64, f64),
-    Fixed(f64)
+    Fixed(f64),
+    Mixed(Vec<DeviceRand>),
 }
 
 impl DeviceRand {
     pub fn next_rand(&self) -> f64 {
         let mut n: f64 = rand::random();
-        while n == 0.0 {
+        while n == 0.0f64 {
             n = rand::random();
         }
 
         match self {
-            DeviceRand::Exponential(lambda) => {
-                - (1.0 / lambda) * n.ln()
-            },
-            DeviceRand::Uniform(a, b) => {
-                a + (b - a) * n
-            },
-            DeviceRand::Fixed(a) => {
-                *a
-            },
+            DeviceRand::Exponential(lambda) => -(1.0 / lambda) * n.ln(),
+            DeviceRand::Uniform(a, b) => a + (b - a) * n,
+            DeviceRand::Fixed(a) => *a,
+            DeviceRand::Mixed(rands) => rands.iter().map(|rand| rand.next_rand()).sum(),
         }
     }
 }
@@ -137,4 +133,3 @@ impl fmt::Debug for DeviceStats {
         writeln!(f, "}}")
     }
 }
-

@@ -14,14 +14,17 @@ pub trait Producer {
 
 pub struct ModelConstructor<T: Producer> {
     producer: Option<T>,
-    __processes: Vec<SharedProcess>,
+    processes: Vec<SharedProcess>,
 }
 
 impl<T: Producer> ModelConstructor<T> {
-    fn new(config: fn(&mut Self)) -> Self {
+    fn new<F>(config: F) -> Self
+    where 
+        F: FnOnce(&mut Self), 
+    {
         let mut constructor = ModelConstructor {
             producer: None,
-            __processes: Vec::new(),
+            processes: Vec::new(),
         };
 
         (config)(&mut constructor);
@@ -37,7 +40,7 @@ impl<T: Producer> ModelConstructor<T> {
 
     pub fn add_process<P: Process + 'static>(&mut self, proc: P) -> SharedProcess {
         let proc = proc.to_shared();
-        self.__processes.push(proc.clone());
+        self.processes.push(proc.clone());
         return proc;
     }
 
@@ -51,12 +54,12 @@ impl<T: Producer> ModelConstructor<T> {
         state.add_processes(state.producer.get_next(), &mut id_s);
 
         let processes: HashSet<usize> = self
-            .__processes
+            .processes
             .iter()
             .map(|proc| proc.borrow().get_id())
             .collect();
 
-        assert!(id_s == processes, "incorrect config!");
+        assert!(id_s == processes, "Didn't set process chain!");
 
         Model { state: state }
     }
@@ -67,7 +70,10 @@ pub struct Model<T: Producer> {
 }
 
 impl<T: Producer> Model<T> {
-    pub fn simulate(total_time: f64, check_period: f64, config: fn(&mut ModelConstructor<T>)) {
+    pub fn simulate<F>(total_time: f64, check_period: f64, config: F)
+    where
+        F: FnOnce(&mut ModelConstructor<T>), 
+    {
         ModelConstructor::<T>::new(config)
             .construct()
             .sim(total_time, check_period);
@@ -88,7 +94,7 @@ impl<T: Producer> Model<T> {
             current_time += delta_time;
 
             // Check and record stats
-            if period_time == check_period {
+            if period_time >= check_period {
                 period_time = 0.0;
 
                 self.state.measure_stats();
