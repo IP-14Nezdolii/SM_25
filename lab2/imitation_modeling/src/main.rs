@@ -53,11 +53,9 @@ fn task34(
         proc1
             .borrow_mut()
             .add_device(Device::new(DeviceRand::Uniform(min_work_time, max_work_time)));
-
         proc2
             .borrow_mut()
             .add_device(Device::new(DeviceRand::Uniform(min_work_time, max_work_time)));
-
         proc3
             .borrow_mut()
             .add_device(Device::new(DeviceRand::Uniform(min_work_time, max_work_time)));
@@ -83,7 +81,6 @@ fn task5() {
         proc1
             .borrow_mut()
             .add_device(Device::new(DeviceRand::Uniform(1.0, 4.0)));
-
         proc2
             .borrow_mut()
             .add_device(Device::new(DeviceRand::Uniform(1.0, 4.0)));
@@ -107,7 +104,7 @@ fn task6() {
             .add_device(Device::new(DeviceRand::Uniform(1.0, 4.0)));
         proc2
             .borrow_mut()
-            .add_device(Device::new(DeviceRand::Uniform(1.0, 4.0)));
+            .add_device(Device::new(DeviceRand::Uniform(4.0, 10.0)));
         proc3
             .borrow_mut()
             .add_device(Device::new(DeviceRand::Uniform(1.0, 4.0)));

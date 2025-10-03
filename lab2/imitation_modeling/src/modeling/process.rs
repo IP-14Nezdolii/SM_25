@@ -1,12 +1,11 @@
+use crate::modeling::device::Device;
+use std::any::type_name;
 use std::cell::{Ref, RefMut};
 use std::rc::Weak;
 use std::{cell::RefCell, rc::Rc};
-use std::any::type_name;
-use crate::modeling::device::{Device};
 
 pub trait Process {
     fn get_work_time(&self) -> Option<f64>;
-    fn process(&mut self) -> bool;
 
     /// Must be downgraded to avoid cyclic references
     fn add_next(&mut self, next: SharedProcess, priority: u16);
@@ -22,7 +21,7 @@ pub trait Process {
 
     fn get_all_next(&self) -> Vec<SharedProcess>;
     fn get_if_failure(&self) -> Option<SharedProcess>;
-    
+
     fn measure_stats(&mut self);
     fn print_stats(&self);
 
@@ -31,8 +30,15 @@ pub trait Process {
         self.get_base().get_id()
     }
 
-    fn to_shared(self) -> SharedProcess where Self: Sized + 'static {
+    fn to_shared(self) -> SharedProcess
+    where
+        Self: Sized + 'static,
+    {
         SharedProcess::new(Box::new(self))
+    }
+
+    fn process(&mut self) -> bool {
+        self.get_mut_base().process()
     }
 
     fn run(&mut self, time: f64) {
@@ -40,7 +46,23 @@ pub trait Process {
 
         for _ in 0..processed {
             if let Some(next) = self.get_next() {
-                next.borrow_mut().process();
+                if next.borrow_mut().process() {
+                    continue;
+                }
+
+                // check if_failure
+                let mut current = self.get_if_failure();
+
+                while let Some(next) = current.clone() {
+                    if next.get_process_id() == self.get_id() {
+                        break;
+                    }
+
+                    if next.borrow_mut().process() {
+                        break;
+                    }
+                    current = next.borrow_mut().get_if_failure();
+                }
             }
         }
     }
@@ -52,13 +74,22 @@ pub trait Process {
 
 pub struct SharedProcess {
     inner: Rc<RefCell<Box<dyn Process>>>,
+    id: usize,
 }
 
 impl SharedProcess {
     pub fn new(proc: Box<dyn Process>) -> Self {
+        let inner = Rc::new(RefCell::new(proc));
+        let id = inner.borrow().get_id();
+
         Self {
-            inner: Rc::new(RefCell::new(proc)),
+            inner: inner,
+            id: id,
         }
+    }
+
+    pub fn get_process_id(&self) -> usize {
+        self.id
     }
 
     pub fn borrow(&self) -> Ref<'_, Box<dyn Process>> {
@@ -76,23 +107,31 @@ impl SharedProcess {
 
 impl Clone for SharedProcess {
     fn clone(&self) -> Self {
-        Self { inner: self.inner.clone() }
+        Self {
+            inner: self.inner.clone(),
+            id: self.get_process_id(),
+        }
     }
 }
 
 pub struct WeakSharedProcess {
     inner: Weak<RefCell<Box<dyn Process>>>,
+    id: usize,
 }
 
 impl WeakSharedProcess {
     fn new(proc: &SharedProcess) -> Self {
         Self {
             inner: Rc::downgrade(&proc.inner),
+            id: proc.id,
         }
     }
 
     pub fn upgrade(&self) -> Option<SharedProcess> {
-        self.inner.upgrade().map(|rc| SharedProcess { inner: rc })
+        match self.inner.upgrade() {
+            Some(inner) => Some(SharedProcess { inner, id: self.id }),
+            None => None,
+        }
     }
 }
 
@@ -101,55 +140,53 @@ pub struct ProcessBase {
     queue_size: usize,
 
     devices: Vec<Device>,
- 
+
     stats: ProcessStats,
 }
 
 impl ProcessBase {
-    pub fn new(
-        queue_capacity: usize,
-    ) -> Self {
+    pub fn new(queue_capacity: usize) -> Self {
         ProcessBase {
             queue_capacity: queue_capacity,
             queue_size: 0,
             devices: Vec::new(),
-            stats:  ProcessStats {
-                queue_sizies: Vec::new(), 
+            stats: ProcessStats {
+                queue_sizies: Vec::new(),
                 requests_number: 0,
-                failures: 0, 
-                processed: 0, 
-                total_wait_time: 0.0 
-            }
+                failures: 0,
+                processed: 0,
+                total_wait_time: 0.0,
+            },
         }
     }
 
     pub fn add_device(&mut self, device: Device) {
         self.devices.push(device);
     }
-    
+
     pub fn get_work_time(&self) -> Option<f64> {
-        self.devices.iter()
+        self.devices
+            .iter()
             .map(|d| d.get_work_time())
-            .fold(None, |a, b| {
-                match (a, b) {
-                    (Some(x), Some(y)) => Some(x.min(y)),
-                    (Some(x), None) => Some(x),
-                    (None, Some(y)) => Some(y),
-                    (None, None) => None,
-                }
+            .fold(None, |a, b| match (a, b) {
+                (Some(x), Some(y)) => Some(x.min(y)),
+                (Some(x), None) => Some(x),
+                (None, Some(y)) => Some(y),
+                (None, None) => None,
             })
     }
 
     pub fn run(&mut self, time: f64) -> usize {
         assert!(
-            !self.devices.is_empty(), 
-            "No devices in process {}", type_name::<Self>()
+            !self.devices.is_empty(),
+            "No devices in process {}",
+            type_name::<Self>()
         );
 
         let mut result = 0;
 
         for device in self.devices.iter_mut() {
-            // if device is free   
+            // if device is free
             if device.get_work_time().is_none() {
                 // load new resourse to device
                 if self.queue_size > 0 {
@@ -193,7 +230,7 @@ impl ProcessBase {
 
         if self.queue_size < self.queue_capacity {
             self.queue_size += 1;
-            
+
             return true;
         } else {
             self.stats.add_failures();
@@ -241,8 +278,8 @@ impl ProcessStats {
     }
 
     fn print(&self, devices: &Vec<Device>) {
-        let avg_queue_size = self.queue_sizies.iter()
-            .sum::<usize>() as f64 / self.queue_sizies.len() as f64;
+        let avg_queue_size =
+            self.queue_sizies.iter().sum::<usize>() as f64 / self.queue_sizies.len() as f64;
 
         let failure_probability = self.failures as f64 / self.requests_number as f64;
         let throughput = self.processed as f64 / self.requests_number as f64;
@@ -256,7 +293,10 @@ impl ProcessStats {
 
         println!("total wait time: {:?}", self.total_wait_time);
         println!("avg queue size: {:?}", avg_queue_size);
-        println!("avg waiting time: {:?}", self.total_wait_time / self.requests_number as f64);
+        println!(
+            "avg waiting time: {:?}",
+            self.total_wait_time / self.requests_number as f64
+        );
         println!("throughput: {:?}", throughput);
 
         for device in devices.iter() {

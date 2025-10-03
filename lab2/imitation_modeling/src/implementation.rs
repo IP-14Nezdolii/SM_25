@@ -26,27 +26,15 @@ impl Process for ModelProcess {
         self.base.get_work_time()
     }
 
-    fn process(&mut self) -> bool {
-        if self.base.process() == false {
-            if let Some(failure_proc) = self.get_if_failure() {
-                return failure_proc.borrow_mut().process();
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-
     fn add_next(&mut self, next: SharedProcess, priority: u16) {
         assert!(
-            self.get_id() != next.borrow().get_id(),
+            self.get_id() != next.get_process_id(),
             "A process cannot point to itself as next"
         );
 
         for (proc, _) in self.next.iter() {
             if let Some(proc) = proc.upgrade() {
-                if proc.borrow().get_id() == next.borrow().get_id() {
+                if proc.get_process_id() == next.get_process_id() {
                     return;
                 }
             }
@@ -56,7 +44,7 @@ impl Process for ModelProcess {
 
     fn set_if_failure(&mut self, proc: SharedProcess) {
         assert!(
-            self.get_id() != proc.borrow().get_id(),
+            self.get_id() != proc.get_process_id(),
             "A process cannot point to itself as failed"
         );
 
@@ -190,5 +178,152 @@ impl Producer for ModelProducer {
 
     fn get_time(&self) -> f64 {
         self.required_time - self.current_time
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::modeling::{Model, device::Device};
+
+    use super::*;
+
+    #[test]
+    fn simple_test() {
+        for i in 2..=10 {
+            for j in 2..=10 {
+                for k in 0..=20 {
+                    Model::simulate(10000.0, j as f64, |model| {
+                        // Construct processes and devices here
+                        let proc1 = model.add_process(ModelProcess::new(k));
+
+                        proc1
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+
+                        // Set up producer
+                        model
+                            .set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                    });
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn next_test() {
+        for i in 2..=10 {
+            for j in 2..=10 {
+                for k in 0..=20 {
+                    Model::simulate(10000.0, j as f64, |model| {
+                        // Construct processes and devices here
+                        let proc1 = model.add_process(ModelProcess::new(k));
+                        let proc2 = model.add_process(ModelProcess::new(k));
+                        let proc3 = model.add_process(ModelProcess::new(k));
+
+                        proc1
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+                        proc2
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+                        proc3
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+
+                        proc1.borrow_mut().add_next(proc2, 2);
+                        proc1.borrow_mut().add_next(proc3, 1);
+                        // Set up producer
+                        model
+                            .set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                    });
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn failure_test() {
+        for i in 2..=10 {
+            for j in 2..=10 {
+                for k in 0..=20 {
+                    Model::simulate(10000.0, j as f64, |model| {
+                        // Construct processes and devices here
+                        let proc1 = model.add_process(ModelProcess::new(k));
+                        let proc2 = model.add_process(ModelProcess::new(k));
+                        let proc3 = model.add_process(ModelProcess::new(k));
+
+                        proc1
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+                        proc2
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+                        proc3
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+
+                        proc1.borrow_mut().add_next(proc2.clone(), 1);
+                        proc2.borrow_mut().add_next(proc3.clone(), 1);
+
+                        proc1.borrow_mut().set_if_failure(proc2.clone());
+                        proc2.borrow_mut().set_if_failure(proc3.clone());
+                        proc3.borrow_mut().set_if_failure(proc1.clone());
+                        // Set up producer
+                        model
+                            .set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                    });
+                }
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn self_next_test() {
+        for i in 2..=10 {
+            for j in 2..=10 {
+                for k in 0..=20 {
+                    Model::simulate(1000.0, j as f64, |model| {
+                        // Construct processes and devices here
+                        let proc1 = model.add_process(ModelProcess::new(k));
+
+                        proc1
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+
+                        // Set up process chain
+                        proc1.borrow_mut().add_next(proc1.clone(), 1);
+
+                        // Set up producer
+                        model.set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                    });
+                }
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn self_failure_test() {
+        for i in 2..=10 {
+            for j in 2..=10 {
+                for k in 0..=20 {
+                    Model::simulate(1000.0, j as f64, |model| {
+                        // Construct processes and devices here
+                        let proc1 = model.add_process(ModelProcess::new(k));
+
+                        proc1
+                            .borrow_mut()
+                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+
+                        // Set up process chain
+                        proc1.borrow_mut().set_if_failure(proc1.clone());
+
+                        // Set up producer
+                        model.set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                    });
+                }
+            }
+        }
     }
 }

@@ -56,7 +56,7 @@ impl<T: Producer> ModelConstructor<T> {
         let processes: HashSet<usize> = self
             .processes
             .iter()
-            .map(|proc| proc.borrow().get_id())
+            .map(|proc| proc.get_process_id())
             .collect();
 
         assert!(id_s == processes, "Didn't set process chain!");
@@ -112,7 +112,7 @@ struct ModelState<T: Producer> {
 
 impl<T: Producer> ModelState<T> {
     fn add_processes(&mut self, proc: SharedProcess, id_s: &mut HashSet<usize>) {
-        let id = proc.borrow().get_id();
+        let id = proc.get_process_id();
 
         if id_s.contains(&id) {
             return;

@@ -77,6 +77,8 @@ impl Device {
     }
 }
 
+
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum DeviceRand {
     Exponential(f64),
