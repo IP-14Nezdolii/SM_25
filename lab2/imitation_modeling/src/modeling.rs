@@ -2,7 +2,7 @@ pub mod device;
 pub mod process;
 
 use process::SharedProcess;
-use std::{collections::HashSet};
+use std::collections::HashSet;
 
 use crate::modeling::process::Process;
 
@@ -10,6 +10,7 @@ pub trait Producer {
     fn run(&mut self, time: f64);
     fn get_time(&self) -> f64;
     fn get_next(&self) -> SharedProcess;
+    fn get_produced(&self) -> usize;
 }
 
 pub struct ModelConstructor<T: Producer> {
@@ -19,8 +20,8 @@ pub struct ModelConstructor<T: Producer> {
 
 impl<T: Producer> ModelConstructor<T> {
     fn new<F>(config: F) -> Self
-    where 
-        F: FnOnce(&mut Self), 
+    where
+        F: FnOnce(&mut Self),
     {
         let mut constructor = ModelConstructor {
             producer: None,
@@ -72,7 +73,7 @@ pub struct Model<T: Producer> {
 impl<T: Producer> Model<T> {
     pub fn simulate<F>(total_time: f64, check_period: f64, config: F)
     where
-        F: FnOnce(&mut ModelConstructor<T>), 
+        F: FnOnce(&mut ModelConstructor<T>),
     {
         ModelConstructor::<T>::new(config)
             .construct()
@@ -80,6 +81,8 @@ impl<T: Producer> Model<T> {
     }
 
     fn sim(mut self, time: f64, check_period: f64) {
+        //let mut produced
+
         let mut current_time = 0.0;
         let mut period_time = 0.0;
 
@@ -101,7 +104,8 @@ impl<T: Producer> Model<T> {
             }
         }
 
-        self.state.print_stats(time, check_period);
+        self.state
+            .print_stats(time, check_period, self.state.producer.get_produced());
     }
 }
 
@@ -153,11 +157,12 @@ impl<T: Producer> ModelState<T> {
         self.producer.run(time);
     }
 
-    fn print_stats(&self, total_time: f64, check_period: f64) {
+    fn print_stats(&self, total_time: f64, check_period: f64, produced: usize) {
         println!("--- Model Stats ---");
         println!("Total time: {}", total_time);
         println!("Check period: {}", check_period);
         println!("Number of processes: {}", self.processes.len());
+        println!("Produced: {}", produced);
         println!("-------------------");
 
         for i in 0..self.processes.len() {
@@ -165,7 +170,6 @@ impl<T: Producer> ModelState<T> {
 
             println!("--- Process #{} ---", i);
             proc.borrow().print_stats();
-            //println!("-------------------");
         }
     }
 }

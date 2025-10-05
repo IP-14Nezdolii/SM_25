@@ -22,6 +22,7 @@ impl ModelProcess {
 }
 
 impl Process for ModelProcess {
+
     fn get_work_time(&self) -> Option<f64> {
         self.base.get_work_time()
     }
@@ -124,16 +125,6 @@ impl Process for ModelProcess {
         SharedProcess::new(Box::new(self))
     }
 
-    fn run(&mut self, time: f64) {
-        let processed = self.get_mut_base().run(time);
-
-        for _ in 0..processed {
-            if let Some(next) = self.get_next() {
-                next.borrow_mut().process();
-            }
-        }
-    }
-
     fn add_device(&mut self, device: crate::modeling::device::Device) {
         self.get_mut_base().add_device(device);
     }
@@ -145,6 +136,8 @@ pub struct ModelProducer {
 
     current_time: f64,
     required_time: f64,
+
+    produced: usize,
 }
 
 impl ModelProducer {
@@ -156,6 +149,7 @@ impl ModelProducer {
             rand: rand,
             current_time: 0.0,
             required_time: required_time,
+            produced: 0,
         }
     }
 }
@@ -169,6 +163,8 @@ impl Producer for ModelProducer {
 
             self.current_time -= self.required_time;
             self.required_time = self.rand.next_rand();
+
+            self.produced += 1;
         }
     }
 
@@ -178,6 +174,10 @@ impl Producer for ModelProducer {
 
     fn get_time(&self) -> f64 {
         self.required_time - self.current_time
+    }
+
+    fn get_produced(&self) -> usize {
+        self.produced
     }
 }
 
@@ -242,7 +242,7 @@ mod tests {
     }
 
     #[test]
-    fn failure_test() {
+    fn failure_test1() {
         for i in 2..=10 {
             for j in 2..=10 {
                 for k in 0..=20 {
@@ -257,7 +257,7 @@ mod tests {
                             .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
                         proc2
                             .borrow_mut()
-                            .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
+                            .add_device(Device::new(DeviceRand::Uniform(100.0, 1000.0)));
                         proc3
                             .borrow_mut()
                             .add_device(Device::new(DeviceRand::Uniform(1.0, i as f64)));
@@ -278,6 +278,49 @@ mod tests {
     }
 
     #[test]
+    fn failure_test2() {
+        Model::simulate(10000.0, 100.0, |model| {
+            // Construct processes and devices here
+            let proc1 = model.add_process(ModelProcess::new(2));
+            let proc2 = model.add_process(ModelProcess::new(2));
+            let proc3 = model.add_process(ModelProcess::new(2));
+            let proc4 = model.add_process(ModelProcess::new(2));
+            let proc5 = model.add_process(ModelProcess::new(2));
+            let proc6 = model.add_process(ModelProcess::new(2));
+
+            proc1
+                .borrow_mut()
+                .add_device(Device::new(DeviceRand::Uniform(10.0, 100.0)));
+            proc2
+                .borrow_mut()
+                .add_device(Device::new(DeviceRand::Uniform(10.0, 100.0)));
+            proc3
+                .borrow_mut()
+                .add_device(Device::new(DeviceRand::Uniform(10.0, 100.0)));
+            proc4
+                .borrow_mut()
+                .add_device(Device::new(DeviceRand::Uniform(10.0, 100.0)));
+            proc5
+                .borrow_mut()
+                .add_device(Device::new(DeviceRand::Uniform(10.0, 100.0)));
+            proc6
+                .borrow_mut()
+                .add_device(Device::new(DeviceRand::Uniform(10.0, 100.0)));
+
+            proc1.borrow_mut().add_next(proc2.clone(), 1);
+
+            proc2.borrow_mut().set_if_failure(proc1.clone());
+            proc1.borrow_mut().set_if_failure(proc3.clone());
+            proc3.borrow_mut().set_if_failure(proc4.clone());
+            proc4.borrow_mut().set_if_failure(proc5.clone());
+            proc5.borrow_mut().set_if_failure(proc6.clone());
+            proc6.borrow_mut().set_if_failure(proc1.clone());
+            // Set up producer
+            model.set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(1.0, 2.0)));
+        });
+    }
+
+    #[test]
     #[should_panic]
     fn self_next_test() {
         for i in 2..=10 {
@@ -295,7 +338,8 @@ mod tests {
                         proc1.borrow_mut().add_next(proc1.clone(), 1);
 
                         // Set up producer
-                        model.set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                        model
+                            .set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
                     });
                 }
             }
@@ -320,7 +364,8 @@ mod tests {
                         proc1.borrow_mut().set_if_failure(proc1.clone());
 
                         // Set up producer
-                        model.set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
+                        model
+                            .set_producer(ModelProducer::new(proc1, DeviceRand::Uniform(2.0, 3.0)));
                     });
                 }
             }

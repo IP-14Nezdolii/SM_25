@@ -1,6 +1,7 @@
 use crate::modeling::device::Device;
 use std::any::type_name;
 use std::cell::{Ref, RefMut};
+use std::collections::HashSet;
 use std::rc::Weak;
 use std::{cell::RefCell, rc::Rc};
 
@@ -38,7 +39,29 @@ pub trait Process {
     }
 
     fn process(&mut self) -> bool {
-        self.get_mut_base().process()
+        if self.get_mut_base().process() {
+            return true;
+        }
+
+        let mut id_s: HashSet<usize> = HashSet::new();
+        id_s.insert(self.get_id());
+
+        let mut current = self.get_if_failure();
+        while let Some(next_failure) = current.clone() {
+            if id_s.contains(&next_failure.get_process_id()) {
+                return false;
+            }
+
+            if next_failure.borrow_mut().get_mut_base().process() {
+                return true;
+            } else {
+                // check next if_failure
+                current = next_failure.borrow_mut().get_if_failure();
+                id_s.insert(next_failure.get_process_id());
+            }
+        }
+
+        return false;
     }
 
     fn run(&mut self, time: f64) {
@@ -46,22 +69,40 @@ pub trait Process {
 
         for _ in 0..processed {
             if let Some(next) = self.get_next() {
-                if next.borrow_mut().process() {
+                let mut next = next.borrow_mut();
+
+                if next.get_mut_base().process() {
                     continue;
                 }
 
                 // check if_failure
-                let mut current = self.get_if_failure();
+                let mut id_s: HashSet<usize> = HashSet::new();
+                id_s.insert(next.get_id());
 
-                while let Some(next) = current.clone() {
-                    if next.get_process_id() == self.get_id() {
+                let mut current = next.get_if_failure();
+                while let Some(next_failure) = current.clone() {
+                    if id_s.contains(&next_failure.get_process_id()) {
                         break;
                     }
 
-                    if next.borrow_mut().process() {
-                        break;
+                    if next_failure.get_process_id() == self.get_id() {
+                        if self.process() {
+                            break;
+                        }
+
+                        // check next if_failure
+                        current = self.get_if_failure();
+                        id_s.insert(self.get_id());
+                        continue;
                     }
-                    current = next.borrow_mut().get_if_failure();
+
+                    if next_failure.borrow_mut().get_mut_base().process() {
+                        break;
+                    } else {
+                        // check next if_failure
+                        current = next_failure.borrow_mut().get_if_failure();
+                        id_s.insert(next_failure.get_process_id());
+                    }
                 }
             }
         }
