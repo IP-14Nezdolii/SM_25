@@ -1,28 +1,28 @@
-package com.example;
+package com.example.modeling;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.example.modeling.components.device.Device.DeviceRand;
 import com.example.utils.Pair;
 import com.example.modeling.components.Component;
 import com.example.modeling.components.Connection.NextPriority;
 
 public final class Model {
-    private static Random r = new Random();
+    public static Random r = new Random();
 
-    public static DeviceRand getFixed(double num) {
+    public static Supplier<Double> getFixed(double num) {
         return () -> num;
     }
 
-    public static DeviceRand getNorm(double mean, double std) {
+    public static Supplier<Double> getNorm(double mean, double std) {
         return () -> r.nextGaussian(mean, std);
     }
 
-    public static DeviceRand getUniform(double from, double to) {
+    public static Supplier<Double> getUniform(double from, double to) {
         return () -> {
             double n = r.nextDouble();
             while (n == 0.0) {
@@ -33,14 +33,33 @@ public final class Model {
         };
     }
 
-    public static DeviceRand getExponential(double lambda) {
+    public static Supplier<Double> getExponential(double mean) {
         return () -> {
+            double lambda = 1/mean;
+
             double n = r.nextDouble();
             while (n == 0.0) {
                 n = r.nextDouble();
             }
 
             return -(1.0 / lambda) * Math.log(n);
+        };
+    }
+
+    public static Supplier<Double> getErlang(int k, double mean) {
+        return () -> {
+            double lambda = k/mean;
+
+            double sum = 0;
+            for (int i = 0; i < k; i++) {
+                double n = r.nextDouble();
+                while (n == 0.0) {
+                    n = r.nextDouble();
+                }
+
+                sum += -Math.log(n) / lambda;
+            }
+            return sum;
         };
     }
 
@@ -51,9 +70,9 @@ public final class Model {
             arr.sort((a,b)-> Long.compare(a.get1(), b.get1()));
 
             List<Pair<Component, Long>> next = arr.stream()
-                .filter(e -> e.get0().getWorkTime().isEmpty())
-                .collect(Collectors.toList())
-                .reversed();
+                    .filter(e -> e.get0().getWorkTime().isEmpty())
+                    .collect(Collectors.toList())
+                    .reversed();
             
             if (next.isEmpty()) {
                 return Optional.empty();

@@ -1,8 +1,6 @@
-package com.example.modeling.device;
+package com.example.modeling.components.device;
 
 import java.util.Optional;
-
-import com.example.utils.DeviceRand;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -77,12 +75,12 @@ public class Device {
     /*
      * Throws exception if device is busy
      */
-    public void process() {
+    public void process(int typ) {
         if (this.required_time.isPresent()) {
             throw new IllegalStateException(
                 "Device is busy, Required time left: " + (this.required_time.get() - this.current_time));
         } else {
-            this.required_time = Optional.of(this.rand.next_rand());
+            this.required_time = Optional.of(this.rand.next_rand(typ));
             this.current_time = 0.0;
         }
     }
@@ -128,5 +126,10 @@ public class Device {
                     this.getUtilization(),
                     this.processed);
         }
+    }
+
+    @FunctionalInterface
+    public interface DeviceRand {
+        double next_rand(int typ);
     }
 }

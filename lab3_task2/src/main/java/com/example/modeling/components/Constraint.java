@@ -1,35 +1,28 @@
-package com.example.modeling;
+package com.example.modeling.components;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import com.example.modeling.components.Component;
-import com.example.utils.DeviceRand.NextPriority;
-
 import lombok.Getter;
 
-public class Constraint<T extends Component> extends Component {
+public class Constraint implements Component {
     private final Stats stats = new Stats();
-    private final T wrappedElem;
-    private final Predicate<T> predicate;
+    private final String name;
+    private final Predicate<Integer> predicate;
 
+    private Optional<Component> next = Optional.empty();
     private Optional<Component> ifFailure = Optional.empty();
 
-    public Constraint(T wrappedElem, Predicate<T> predicate) {
-        super(wrappedElem.priority, "constraint_"+ wrappedElem.name);
-
-        this.wrappedElem = wrappedElem;
+    public Constraint(Predicate<Integer> predicate, String name) {
         this.predicate = predicate;
+        this.name = name;
     }
 
-    public Predicate<T> getPredicate() {
-        return predicate;
-    }
-
-    public T getWrapped() {
-        return this.wrappedElem;
-    }
+    @Override
+    public String getName() {
+        return this.name;
+    } 
 
     public void setIfFailure(Component ifFailure) {
         this.ifFailure = Optional.of(ifFailure);
@@ -39,57 +32,58 @@ public class Constraint<T extends Component> extends Component {
         return this.ifFailure;
     }
 
-    @Override
-    public void addNext(Component elem, int score) {
-        this.wrappedElem.addNext(elem, score);
+    public void setNext(Component next) {
+        this.next = Optional.of(next);
     }
 
+    
     @Override
     public List<Component> getAllNext() {
-        return this.wrappedElem.getAllNext();
+        return this.next.isPresent()
+            ? List.of(this.next.get())
+            : List.of();
     }
 
     @Override
     public Optional<Component> getNextChosen() {
-        return this.wrappedElem.getNextChosen();
-    }
-
-    @Override
-    public void setNextPriority(NextPriority priority) {
-        this.wrappedElem.setNextPriority(priority);
-        this.priority = priority;
+        return this.next;
     }
 
     @Override
     public Optional<Double> getWorkTime() {
-        return this.wrappedElem.getWorkTime();
+        return this.next.isPresent()
+            ? this.next.get().getWorkTime()
+            : Optional.empty();
     }
 
     @Override
     public void run(double time) {
-        this.wrappedElem.run(time);
+        return;
     }
 
     @Override
-    public boolean process() {
+    public boolean process(int typ) {
         this.stats.addRequest();
 
-        if (this.predicate.test(this.wrappedElem)) {
-            return this.wrappedElem.process();
+        if (this.predicate.test(typ)) {
+            if (this.next.isPresent()) {
+                this.next.get().process(typ);
+            } 
+
+            return true;
         } else {
             this.stats.addFailure();
 
             if (this.ifFailure.isPresent()) {
-                this.ifFailure.get().process();
+                this.ifFailure.get().process(typ);
             }
-            
             return false;
         }
     }
 
     @Override
-    public Object getStats() {
-        return List.of(this.stats, this.wrappedElem.getStats());
+    public Stats getStats() {
+        return this.stats;
     }
 
     
@@ -121,5 +115,5 @@ public class Constraint<T extends Component> extends Component {
                     this.getFailureProbability()
             );
         }
-    } 
+    }
 }

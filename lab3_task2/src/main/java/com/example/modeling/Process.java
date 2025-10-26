@@ -16,7 +16,11 @@ public class Process {
 
     public Process(Producer start, String name) {
         this.producer = start;
-        recursiveCheckNext(this.producer, new HashSet<Object>(), new HashSet<Object>());
+        recursiveCheckNext(
+            this.producer, 
+            new HashSet<Object>(), 
+            new HashSet<Object>()
+        );
     }
 
     private void recursiveCheckNext(Component elem, Set<Object> visited, Set<Object> saved) {
@@ -77,13 +81,14 @@ public class Process {
     }
 
     private void runnAllElems(double time) {
-        this.orderedElems.reversed().forEach(elem -> {
+        for (Component elem : orderedElems) {
             elem.run(time);
-        });
+        }
     }
 
     public Optional<Double> getWorkTime() {
         double time = Double.MAX_VALUE;
+
         for (Component elem : this.orderedElems) {
             Optional<Double> elemTime = elem.getWorkTime();
 

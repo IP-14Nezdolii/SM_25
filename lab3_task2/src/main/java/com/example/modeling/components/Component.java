@@ -14,7 +14,5 @@ public interface Component {
     
     Optional<Double> getWorkTime();
     void run(double time);
-    boolean process();
-
-    
+    boolean process(int typ);
 }
