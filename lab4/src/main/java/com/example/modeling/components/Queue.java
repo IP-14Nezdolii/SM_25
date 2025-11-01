@@ -3,22 +3,17 @@ package com.example.modeling.components;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.PriorityQueue;
 
 import com.example.utils.Pair;
 
 import lombok.Getter;
 
 public class Queue implements Component {
-    private final Stats stats = new Stats();
-    private final String name;
-
-    private final PriorityQueue<Integer> queue = new PriorityQueue<>((a, b) -> {
-        if (a.equals(1)) return -1;
-        if (b.equals(1)) return 1;
-        return 0;
-    });
     
+    private final String name;
+    private Stats stats = new Stats();
+    
+    protected long size = 0;
     private Optional<Component> next = Optional.empty();
 
     public Queue(String name) {
@@ -30,27 +25,41 @@ public class Queue implements Component {
     }
 
     public long getSize() {
-        return this.queue.size();
+        return this.size;
+    }
+
+    public void setSize(long newSize) {
+        this.size = newSize;
+    }
+
+    public void enqueue() {
+        this.size++;
+    }
+
+    public void dequeue() {
+        if (this.size == 0) {
+            throw new IllegalStateException("Queue:" + this.name + ",size == 0"); 
+        }
+
+        this.size--;
     }
 
     @Override
-    public boolean process(int typ) {
+    public boolean process() {
         this.stats.addRequest();
 
         if (this.next.isPresent()) {
             var next = this.next.get();
 
             if (next.getWorkTime().isEmpty()) {
-                this.queue.add(typ);     
-                this.next.get().process(this.queue.poll());
-
+                this.next.get().process();
                 this.stats.addServed();
             } else {
-                this.queue.add(typ);
+                this.enqueue();
             }
             
         } else {
-            this.queue.add(typ);
+            this.enqueue();
         }
         
         return true;
@@ -66,9 +75,10 @@ public class Queue implements Component {
         if (this.next.isPresent()) {
             var next = this.next.get();
 
-            while (next.getWorkTime().isEmpty() && this.queue.size() > 0) {
-                this.next.get().process(this.queue.poll());
+            while (next.getWorkTime().isEmpty() && this.size > 0) {
+                next.process();
 
+                this.dequeue();
                 this.stats.addServed();
             }
         }
@@ -82,6 +92,10 @@ public class Queue implements Component {
     @Override
     public Stats getStats() {
         return this.stats;
+    }
+
+    public void clearStats() {
+        this.stats = new Stats();
     }
 
     @Override
@@ -103,12 +117,12 @@ public class Queue implements Component {
 
     @Getter
     public class Stats {
-        private ArrayList<Pair<Integer, Double>> queueSizies = new ArrayList<>();
+        private ArrayList<Pair<Long, Double>> queueSizies = new ArrayList<>();
         private long requests = 0;
         private long served = 0;
 
         public void record(double time) {
-            this.queueSizies.add(Pair.createPair(Queue.this.queue.size(), time));
+            //this.queueSizies.add(Pair.createPair(Queue.this.size, time));
         }
 
         public long getServed() {

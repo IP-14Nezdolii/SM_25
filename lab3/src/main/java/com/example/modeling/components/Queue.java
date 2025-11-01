@@ -148,7 +148,7 @@ public class Queue implements Component {
 
         public double getAvgWaitTime() {
             return this.served != 0
-                    ? getTotalWaitTime() / this.requests
+                    ? getTotalWaitTime() / this.served
                     : 0.0;
         }
 
