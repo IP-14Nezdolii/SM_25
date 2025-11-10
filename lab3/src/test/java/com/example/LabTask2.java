@@ -14,7 +14,7 @@ import com.example.modeling.components.Constraint;
 import com.example.modeling.components.Producer;
 import com.example.modeling.components.Queue;
 import com.example.utils.Pair;
-
+import com.example.modeling.Model;
 import com.example.modeling.Process;
 
 /**

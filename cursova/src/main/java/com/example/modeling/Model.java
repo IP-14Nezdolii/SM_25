@@ -1,0 +1,147 @@
+package com.example.modeling;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Queue;
+
+import org.decimal4j.immutable.Decimal4f;
+
+import com.example.modeling.components.Component;
+import com.example.modeling.components.Constraint;
+import com.example.modeling.components.Producer;
+
+public class Model {
+    private final ArrayList<Component> orderedElems = new ArrayList<>();
+    private Decimal4f totalTime = Decimal4f.ZERO;
+
+    public Model(Producer start) {
+        addNextBFS(List.of(start));
+    }
+
+    public Model(List<Producer> producers) {
+        addNextBFS(producers);
+    }
+
+    private void addNextBFS(List<Producer> producers) {
+        Queue<Component> queue = new LinkedList<>();
+
+        queue.addAll(producers);
+
+        while (!queue.isEmpty()) {
+            var elem = queue.poll();
+
+            if (this.orderedElems.contains(elem) == false) {
+                this.orderedElems.add(elem);
+
+                queue.addAll(elem.getAllNext());
+
+                if (elem instanceof Constraint) {
+                    var con = (Constraint)elem;
+
+                    if (con.getIfFailure().isPresent()) {
+                       queue.add(con.getIfFailure().get());
+                    }
+                }
+            }
+        }
+    }
+
+    public void run(double runTime) {
+        Decimal4f time = Decimal4f.valueOf(runTime);     
+        Decimal4f currentTime = Decimal4f.ZERO;
+
+        Optional<Decimal4f> t = getLeftTime();
+        Decimal4f dt = t.get();
+
+        while (dt.isLessThanOrEqualTo(time) && 
+            currentTime.add(dt).isLessThanOrEqualTo(time)) {
+
+            currentTime = currentTime.add(dt);
+            this.changeState(dt);
+
+            t = getLeftTime();
+            if (t.isPresent()) {
+                dt = t.get();
+            } else {
+                break;
+            }
+        }
+
+        this.changeState(time.subtract(currentTime));
+        this.totalTime = this.totalTime.add(time);
+    }
+
+    private void changeState(Decimal4f time) {
+        if (time.isEqualTo(Decimal4f.ZERO)) {
+            return;
+        }
+
+        for (var elem : orderedElems.reversed()) {
+            elem.run(time);
+        }
+    }
+
+    public Optional<Decimal4f> getLeftTime() {
+        Decimal4f time = Decimal4f.MAX_VALUE;
+
+        for (Component elem : this.orderedElems) {
+            Optional<Decimal4f> elemTime = elem.getLeftTime();
+
+            if (elemTime.isPresent()) {
+                time = time.min(elemTime.get());
+            }
+        }
+
+        return time != Decimal4f.MAX_VALUE
+                ? Optional.of(time)
+                : Optional.empty();
+    }
+
+    /*
+     * Gathers statistics from all elements in the process
+     */
+    public ModelStats getStats() {
+        ArrayList<Object> stats = new ArrayList<>();
+        for (Component elem : this.orderedElems) {
+            stats.add(elem.getStats());
+        }
+        return new ModelStats(stats, this.totalTime.doubleValue());
+    }
+
+    public class ModelStats {
+        private final ArrayList<Object> elemStats;
+        private final double totalTime;
+
+        ModelStats(ArrayList<Object> elemStats, double totalTime) {
+            this.elemStats = elemStats;
+            this.totalTime = totalTime;
+        }
+
+        public double getTotalTime() {
+            return this.totalTime;
+        }
+
+        @SuppressWarnings("unchecked")
+        public ArrayList<Object> get() {
+            return (ArrayList<Object>) this.elemStats.clone();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("[\n");
+
+            for (Object stats : this.elemStats) {
+                sb.append(" ").append(stats.toString()).append("\n");
+            }
+
+            sb.append("]\n");
+
+            return sb.toString();
+        }
+    }
+
+}

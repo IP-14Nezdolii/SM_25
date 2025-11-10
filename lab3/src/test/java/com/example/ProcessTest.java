@@ -2,6 +2,7 @@ package com.example;
 
 import org.junit.Test;
 
+import com.example.modeling.Model;
 import com.example.modeling.Process;
 import com.example.modeling.components.CompDevice;
 import com.example.modeling.components.Connection;

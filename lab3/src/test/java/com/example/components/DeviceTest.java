@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.example.Model;
+import com.example.modeling.Model;
 import com.example.modeling.components.CompDevice;
 import com.example.modeling.components.Connection;
 import com.example.modeling.components.Producer;

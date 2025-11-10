@@ -1,0 +1,12 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.test.config": {
+        "name": "JUnit Tests",
+        "workingDirectory": "${workspaceFolder}",
+        "testKind": "junit"
+    },
+    "java.project.sourcePaths": [
+        "src/main/java",
+        "src/test/java"
+    ]
+}
