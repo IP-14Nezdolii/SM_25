@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.example.CompDeviceWithCooldown;
 import com.example.modeling.components.CompDevice;
-import com.example.modeling.components.CompDeviceWithCooldown;
 import com.example.modeling.components.device.Device;
 import com.example.modeling.utils.FunRand;
 

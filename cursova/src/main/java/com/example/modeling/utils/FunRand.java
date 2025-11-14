@@ -31,7 +31,10 @@ public class FunRand {
     }
 
     public static Supplier<Double> getUniform(double from, double to) {
-        return () -> from + (to - from) * r.nextDouble();
+        if (to <= from) 
+            throw new IllegalArgumentException("Upper bound must be greater than lower bound");
+
+        return () -> from + (to - from) * nextRandom();
     }
 
     public static Supplier<Double> getExponential(double mean) {
@@ -41,6 +44,9 @@ public class FunRand {
     }
 
     public static Supplier<Double> getCombined(List<Supplier<Double>> lst) {
+        if (lst.isEmpty())
+            throw new IllegalArgumentException("List must be not empty");
+
         return () -> {
             double t = 0;
 
@@ -53,9 +59,8 @@ public class FunRand {
     }
  
     public static Supplier<Double> getErlang(double mean, double var) {
-        if (var <= 0 || mean <= 0) {
-            throw new IllegalArgumentException("mean and variance must be positive");
-        }
+        if (var <= 0 || mean <= 0) 
+            throw new IllegalArgumentException("Mean and variance must be positive");
 
         double kReal = (mean * mean) / var;
         final int k = Math.max(1, (int) Math.round(kReal));
@@ -66,11 +71,7 @@ public class FunRand {
             double sum = 0.0;
 
             for (int i = 0; i < k; i++) {
-                double u = nextRandom();
-                while (u == 0.0) {
-                    u = nextRandom();
-                }
-                sum += -Math.log(u) / lam;
+                sum += -Math.log(nextRandom()) / lam;
             }
             return sum;
         };

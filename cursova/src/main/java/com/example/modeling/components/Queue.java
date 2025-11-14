@@ -48,17 +48,7 @@ public class Queue implements Component {
         this.stats.addRequest();
         this.enqueue();
 
-        if (this.next.isPresent()) {
-            var next = this.next.get();
-
-            while (next.getLeftTime().isEmpty() && this.size > 0) {
-                this.next.get().process();
-                this.stats.addServed();
-
-                this.dequeue();
-            }
-        }
-        
+        tryServe();  
         return true;
     }
 
@@ -68,7 +58,10 @@ public class Queue implements Component {
     @Override
     public void run(Decimal4f time) {
         this.stats.record(time.doubleValue());
+        tryServe();
+    }
 
+    private void tryServe() {
         if (this.next.isPresent()) {
             var next = this.next.get();
 
@@ -133,12 +126,31 @@ public class Queue implements Component {
             this.served+=1;
         }
 
-        public double getAverageQueueSize() {
+        public double getTotalBatchWaitTime(int batchSize) {
+            return this.queueSizies.stream()
+                    .mapToDouble(pair -> {
+                        long size = pair.get0();
+                        double time = pair.get1();
+
+                        long batchCount = size / batchSize;
+                        return (double)batchCount * time;
+                    })
+                    .sum();
+        }
+
+        public double getAvgBatchWaitTime(int batchSize) {
+            long batchCount = this.served / batchSize;
+            return  batchCount != 0
+                    ? getTotalBatchWaitTime(batchSize) /  (double)batchCount
+                    : 0.0;
+        }
+
+        public double getAverageBatchQueueSize(int batchSize) {
             if (this.queueSizies.isEmpty()) {
                 return 0.0;
             }
 
-            double total = this.getTotalWaitTime();
+            double total = this.getTotalBatchWaitTime(batchSize);
 
             double totalTime = this.queueSizies.stream()
                     .mapToDouble(Pair::get1)
@@ -147,16 +159,16 @@ public class Queue implements Component {
             return total / totalTime;
         }
 
+        public double getAverageQueueSize() {
+            return getAverageBatchQueueSize(1);
+        }
+
         public double getAvgWaitTime() {
-            return this.served != 0
-                    ? getTotalWaitTime() / this.served
-                    : 0.0;
+            return getAvgBatchWaitTime(1);
         }
 
         public double getTotalWaitTime() {
-            return this.queueSizies.stream()
-                    .mapToDouble(p -> p.get0() * p.get1())
-                    .sum();
+            return getTotalBatchWaitTime(1);
         }
 
         public String getName() {

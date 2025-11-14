@@ -1,10 +1,13 @@
-package com.example.modeling.components;
+package com.example;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.decimal4j.immutable.Decimal4f;
+
+import com.example.modeling.components.CompDevice;
+import com.example.modeling.components.Component;
 
 public class CompDeviceWithCooldown implements Component {
     private final Stats stats = new Stats();

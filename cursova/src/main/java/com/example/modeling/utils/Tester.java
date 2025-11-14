@@ -11,9 +11,9 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.example.CompDeviceWithCooldown;
 import com.example.modeling.Model;
 import com.example.modeling.Model.ModelStats;
-import com.example.modeling.components.CompDeviceWithCooldown;
 import com.example.modeling.components.Connection;
 import com.example.modeling.components.Constraint;
 import com.example.modeling.components.Queue;
@@ -129,9 +129,15 @@ public class Tester {
                     var name = st.getName();
 
                     if (index == 0) {
-                        row.createCell(i).setCellValue(name + "_avg_sz");
+                        row.createCell(i).setCellValue(name + "_avg_sz"); i++;
+                        row.createCell(i).setCellValue(name + "_avg_wt"); i++;
+                        row.createCell(i).setCellValue(name + "_pair_avg_sz"); i++;
+                        row.createCell(i).setCellValue(name + "_pair_avg_wt");
                     } else {
-                        row.createCell(i).setCellValue(st.getAverageQueueSize());
+                        row.createCell(i).setCellValue(st.getAverageQueueSize()); i++;
+                        row.createCell(i).setCellValue(st.getAvgWaitTime()); i++;
+                        row.createCell(i).setCellValue(st.getAverageBatchQueueSize(2)); i++;
+                        row.createCell(i).setCellValue(st.getAvgBatchWaitTime(2));
                     }
 
                 } else {

@@ -115,8 +115,6 @@ public class Connection implements Component {
 
                 if (elem.getLeftTime().isPresent()) {
                     time = time.min(elem.getLeftTime().get());
-                } else {
-                    return Optional.empty();
                 }
             }
 
