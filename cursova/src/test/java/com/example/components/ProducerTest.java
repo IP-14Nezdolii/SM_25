@@ -2,7 +2,7 @@ package com.example.components;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 import org.junit.jupiter.api.Test;
 
 import com.example.modeling.components.Connection;
@@ -20,7 +20,7 @@ public class ProducerTest
 
         producer.setNext(conn);
 
-        producer.run(Decimal4f.valueOf(1000.0));
+        producer.run(Decimal6f.valueOf(1000.0));
 
         var st1 = producer.getStats(); 
         var st2 = conn.getStats(); 

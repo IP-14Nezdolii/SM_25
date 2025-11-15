@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.components.device.Device;
 
@@ -24,7 +24,7 @@ public class CompDevice implements Component {
     }
 
     @Override
-    public void run(Decimal4f time) {
+    public void run(Decimal6f time) {
         if (this.device.getWorkTime().isPresent()) {
 
             if (time.isGreaterThan(this.device.getWorkTime().get())) {
@@ -52,7 +52,7 @@ public class CompDevice implements Component {
     }
 
     @Override
-    public Optional<Decimal4f> getLeftTime() {
+    public Optional<Decimal6f> getLeftTime() {
         return this.device.getWorkTime();
     }
 

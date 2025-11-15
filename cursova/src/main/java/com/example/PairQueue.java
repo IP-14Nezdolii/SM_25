@@ -1,6 +1,6 @@
 package com.example;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.components.Queue;
 
@@ -33,7 +33,7 @@ public class PairQueue extends Queue {
     }
 
     @Override
-    public void run(Decimal4f time) {
+    public void run(Decimal6f time) {
         this.stats.record(time.doubleValue());
 
         if (this.next.isPresent()) {

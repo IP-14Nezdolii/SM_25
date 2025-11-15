@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import java.util.stream.Collectors;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.components.Component;
 import com.example.modeling.components.Connection.NextPriority;
@@ -61,7 +61,7 @@ public final class PriorityImpl {
         }
 
         @Override
-        public Optional<Decimal4f> getWorkTime(ArrayList<Pair<Component, Long>> next) {
+        public Optional<Decimal6f> getWorkTime(ArrayList<Pair<Component, Long>> next) {
             return Optional.empty();
         }
     }

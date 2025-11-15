@@ -2,7 +2,7 @@ package com.example.components;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 import org.junit.jupiter.api.Test;
 
 import com.example.modeling.components.CompDevice;
@@ -25,7 +25,7 @@ public class QueueTest
         assertTrue( device.getLeftTime().isPresent() );
         assertTrue( queue.process() );
 
-        Decimal4f time = device.getLeftTime().get();
+        Decimal6f time = device.getLeftTime().get();
         device.run(time);
         queue.run(time);
 
@@ -49,7 +49,7 @@ public class QueueTest
         assertTrue( device.getLeftTime().isPresent() );
         assertTrue( queue1.process() );
 
-        Decimal4f time = device.getLeftTime().get();
+        Decimal6f time = device.getLeftTime().get();
         device.run(time);
         queue2.run(time);
         queue1.run(time);

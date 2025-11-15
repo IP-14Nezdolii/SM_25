@@ -3,54 +3,54 @@ package com.example.modeling.components.device;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 public class Device {
     final Supplier<Double> rand;
     final Stats stats;
     final String name;
 
-    Decimal4f current_time;
-    Optional<Decimal4f> required_time;
+    Decimal6f currentTime;
+    Optional<Decimal6f> requiredTime;
 
     public Device(Supplier<Double> rand, String name) {
         this.rand = rand;
 
-        this.current_time = Decimal4f.ZERO;
-        this.required_time = Optional.empty();
+        this.currentTime = Decimal6f.ZERO;
+        this.requiredTime = Optional.empty();
 
         this.stats = new Stats();
         this.name = name;
     }
 
-    public Optional<Decimal4f> getWorkTime() {
-        return Optional.ofNullable(required_time
-                .map(t -> t.subtract(this.current_time))
+    public Optional<Decimal6f> getWorkTime() {
+        return Optional.ofNullable(requiredTime
+                .map(t -> t.subtract(this.currentTime))
                 .orElse(null));
     };
 
     /*
      * Throws exception if device is not busy
      */
-    public boolean run(Decimal4f time) {
+    public boolean run(Decimal6f time) {
         boolean done = false;
 
-        if (this.required_time.isPresent()) {
-            var t = this.required_time.get();
+        if (this.requiredTime.isPresent()) {
+            var t = this.requiredTime.get();
 
-            this.current_time = this.current_time.add(time);
+            this.currentTime = this.currentTime.add(time);
 
-            if (this.current_time.isGreaterThanOrEqualTo(t)) {
+            if (this.currentTime.isGreaterThanOrEqualTo(t)) {
                 done = true;
 
                 // stats
                 this.stats.addProcessed();
-                this.stats.addBusyTime(t.subtract(this.current_time.subtract(time)).doubleValue());
-                this.stats.addWaitTime(this.current_time.subtract(t).doubleValue());
+                this.stats.addBusyTime(t.subtract(this.currentTime.subtract(time)).doubleValue());
+                this.stats.addWaitTime(this.currentTime.subtract(t).doubleValue());
 
                 // change state
-                this.current_time = Decimal4f.ZERO;
-                this.required_time = Optional.empty();
+                this.currentTime = Decimal6f.ZERO;
+                this.requiredTime = Optional.empty();
             } else {
                 this.stats.addBusyTime(time.doubleValue());
             }
@@ -65,9 +65,9 @@ public class Device {
      * Throws exception if device is busy
      */
     public void wait(double time) {
-        this.required_time.ifPresentOrElse(t -> {
+        this.requiredTime.ifPresentOrElse(t -> {
             throw new IllegalStateException(
-                "Device is busy. Required time left: " + t.subtract(this.current_time));
+                "Device is busy. Required time left: " + t.subtract(this.currentTime));
         }, () -> {
             this.stats.addWaitTime(time);
         });
@@ -77,19 +77,19 @@ public class Device {
      * Throws exception if device is busy
      */
     public void process() {
-        if (this.required_time.isPresent()) {
+        if (this.requiredTime.isPresent()) {
             throw new IllegalStateException(
-                name + " is busy, Required time left: " + (this.required_time.get().subtract( this.current_time)));
+                name + " is busy, Required time left: " + (this.requiredTime.get().subtract( this.currentTime)));
         } else {
-            Decimal4f num = Decimal4f.valueOf(this.rand.get());
-            if (num.isLessThanOrEqualTo(Decimal4f.ZERO)) {
+            Decimal6f num = Decimal6f.valueOf(this.rand.get());
+            if (num.isLessThanOrEqualTo(Decimal6f.ZERO)) {
                 throw new IllegalStateException(
                     "Invalid rand generator: generated value is less or equal 0. Device name: " + this.name
                 );
             }
 
-            this.required_time = Optional.of(num);
-            this.current_time = Decimal4f.ZERO;
+            this.requiredTime = Optional.of(num);
+            this.currentTime = Decimal6f.ZERO;
         }
     }
 

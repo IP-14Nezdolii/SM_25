@@ -3,7 +3,7 @@ package com.example.modeling.components;
 import java.util.List;
 import java.util.Optional;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 public interface Component {
     List<Component> getAllNext();
@@ -12,8 +12,8 @@ public interface Component {
     Object getStats();
     String getName();
 
-    Optional<Decimal4f> getLeftTime();
+    Optional<Decimal6f> getLeftTime();
 
-    void run(Decimal4f time);
+    void run(Decimal6f time);
     boolean process();
 }

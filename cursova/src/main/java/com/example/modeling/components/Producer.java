@@ -2,7 +2,7 @@ package com.example.modeling.components;
 
 import java.util.function.Supplier;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 public class Producer extends CompDevice {
 
@@ -15,13 +15,13 @@ public class Producer extends CompDevice {
     }
 
     @Override
-    public void run(Decimal4f time) {
+    public void run(Decimal6f time) {
         if (super.getLeftTime().isEmpty()) {
             super.process();
         }
 
-        Decimal4f workTime = super.getLeftTime().get();
-        Decimal4f currentTime = time;
+        Decimal6f workTime = super.getLeftTime().get();
+        Decimal6f currentTime = time;
 
         while (currentTime.isGreaterThanOrEqualTo(workTime)) {
             super.run(workTime);
@@ -31,7 +31,7 @@ public class Producer extends CompDevice {
             workTime = super.getLeftTime().get();
         }
 
-        if (currentTime.isGreaterThan(Decimal4f.ZERO)) {
+        if (currentTime.isGreaterThan(Decimal6f.ZERO)) {
             super.run(currentTime);
         }
     }

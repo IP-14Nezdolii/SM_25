@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.utils.Pair;
 
@@ -52,9 +52,9 @@ public class Constraint implements Component {
     }
 
     @Override
-    public Optional<Decimal4f> getLeftTime() {
+    public Optional<Decimal6f> getLeftTime() {
         if (!this.predicate.get()) {
-            return Optional.of(Decimal4f.MAX_VALUE);
+            return Optional.of(Decimal6f.MAX_VALUE);
         }
 
         return this.next.isPresent()
@@ -63,7 +63,7 @@ public class Constraint implements Component {
     }
 
     @Override
-    public void run(Decimal4f time) {
+    public void run(Decimal6f time) {
         this.stats.checkAvailability(time.doubleValue());
     }
 

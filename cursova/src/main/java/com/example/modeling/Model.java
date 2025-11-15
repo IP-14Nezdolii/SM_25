@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.components.Component;
 import com.example.modeling.components.Constraint;
@@ -14,7 +14,7 @@ import com.example.modeling.components.Producer;
 
 public class Model {
     private final ArrayList<Component> orderedElems = new ArrayList<>();
-    private Decimal4f totalTime = Decimal4f.ZERO;
+    private Decimal6f totalTime = Decimal6f.ZERO;
 
     public Model(Producer start) {
         addNextBFS(List.of(start));
@@ -49,11 +49,11 @@ public class Model {
     }
 
     public void run(double runTime) {
-        Decimal4f time = Decimal4f.valueOf(runTime);     
-        Decimal4f currentTime = Decimal4f.ZERO;
+        Decimal6f time = Decimal6f.valueOf(runTime);     
+        Decimal6f currentTime = Decimal6f.ZERO;
 
-        Optional<Decimal4f> t = getLeftTime();
-        Decimal4f dt = t.get();
+        Optional<Decimal6f> t = getLeftTime();
+        Decimal6f dt = t.get();
 
         while (dt.isLessThanOrEqualTo(time) && 
             currentTime.add(dt).isLessThanOrEqualTo(time)) {
@@ -73,8 +73,8 @@ public class Model {
         this.totalTime = this.totalTime.add(time);
     }
 
-    private void changeState(Decimal4f time) {
-        if (time.isEqualTo(Decimal4f.ZERO)) {
+    private void changeState(Decimal6f time) {
+        if (time.isEqualTo(Decimal6f.ZERO)) {
             return;
         }
 
@@ -83,18 +83,18 @@ public class Model {
         }
     }
 
-    public Optional<Decimal4f> getLeftTime() {
-        Decimal4f time = Decimal4f.MAX_VALUE;
+    public Optional<Decimal6f> getLeftTime() {
+        Decimal6f time = Decimal6f.MAX_VALUE;
 
         for (Component elem : this.orderedElems) {
-            Optional<Decimal4f> elemTime = elem.getLeftTime();
+            Optional<Decimal6f> elemTime = elem.getLeftTime();
 
             if (elemTime.isPresent()) {
                 time = time.min(elemTime.get());
             }
         }
 
-        return time != Decimal4f.MAX_VALUE
+        return time != Decimal6f.MAX_VALUE
                 ? Optional.of(time)
                 : Optional.empty();
     }

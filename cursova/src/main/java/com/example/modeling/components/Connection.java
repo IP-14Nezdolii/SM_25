@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.utils.Pair;
 
@@ -25,7 +25,7 @@ public class Connection implements Component {
     }
 
     @Override
-    public void run(Decimal4f time) {
+    public void run(Decimal6f time) {
         this.stats.updateTime(time.doubleValue());
     }
 
@@ -41,7 +41,7 @@ public class Connection implements Component {
     }
 
     @Override
-    public Optional<Decimal4f> getLeftTime() {
+    public Optional<Decimal6f> getLeftTime() {
         return priority.getWorkTime(next);
     }
 
@@ -105,12 +105,12 @@ public class Connection implements Component {
 
     public static abstract class NextPriority {
 
-        public abstract Optional<Component> getNextChosen(ArrayList<Pair<Component, Long>> next);
+        public abstract Optional<Component> getNextChosen(ArrayList<Pair<Component, Long>> allNext);
 
-        public Optional<Decimal4f> getWorkTime(ArrayList<Pair<Component, Long>> next) {
-            Decimal4f time = Decimal4f.MAX_VALUE;
+        public Optional<Decimal6f> getWorkTime(ArrayList<Pair<Component, Long>> allNext) {
+            Decimal6f time = Decimal6f.MAX_VALUE;
 
-            for (Pair<Component,Long> pair : next) {
+            for (Pair<Component,Long> pair : allNext) {
                 var elem = pair.get0();
 
                 if (elem.getLeftTime().isPresent()) {
@@ -118,7 +118,7 @@ public class Connection implements Component {
                 }
             }
 
-            return time != Decimal4f.MAX_VALUE 
+            return time != Decimal6f.MAX_VALUE 
                 ? Optional.of(time)
                 : Optional.empty();
         }

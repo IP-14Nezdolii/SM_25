@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.utils.Pair;
 
@@ -56,7 +56,7 @@ public class Queue implements Component {
      * Records queue size over time
      */
     @Override
-    public void run(Decimal4f time) {
+    public void run(Decimal6f time) {
         this.stats.record(time.doubleValue());
         tryServe();
     }
@@ -75,7 +75,7 @@ public class Queue implements Component {
     }
 
     @Override
-    public Optional<Decimal4f> getLeftTime() {
+    public Optional<Decimal6f> getLeftTime() {
         return Optional.empty();
     }
 

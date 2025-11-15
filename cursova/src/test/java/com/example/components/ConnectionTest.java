@@ -2,7 +2,7 @@ package com.example.components;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.decimal4j.immutable.Decimal4f;
+import org.decimal4j.immutable.Decimal6f;
 import org.junit.jupiter.api.Test;
 
 import com.example.modeling.components.Connection;
@@ -26,7 +26,7 @@ public class ConnectionTest
         producer.setNext(conn1);
         conn1.addNext(conn2, 1);
 
-        producer.run(Decimal4f.valueOf(1000.0));
+        producer.run(Decimal6f.valueOf(1000.0));
 
         var st1 = (Device.Stats)producer.getStats(); 
         var st2 = (Connection.Stats)conn1.getStats(); 
@@ -50,7 +50,7 @@ public class ConnectionTest
         conn1.addNext(conn2, 1);
         conn1.addNext(conn3, 2);
 
-        producer.run(Decimal4f.valueOf(1000.0));
+        producer.run(Decimal6f.valueOf(1000.0));
 
         var st1 = (Device.Stats)producer.getStats(); 
         var st2 = (Connection.Stats)conn1.getStats(); 
@@ -76,7 +76,7 @@ public class ConnectionTest
         conn1.addNext(conn2, 1);
         conn1.addNext(conn3, 2);
 
-        producer.run(Decimal4f.valueOf(1000.0));
+        producer.run(Decimal6f.valueOf(1000.0));
 
         var st1 = (Device.Stats)producer.getStats(); 
         var st2 = (Connection.Stats)conn1.getStats(); 
@@ -103,7 +103,7 @@ public class ConnectionTest
         conn1.addNext(queue1, 1);
         conn1.addNext(queue2, 1);
 
-        producer.run(Decimal4f.valueOf(100000.0));
+        producer.run(Decimal6f.valueOf(100000.0));
 
         var st1 = producer.getStats(); 
         var st2 = conn1.getStats(); 
