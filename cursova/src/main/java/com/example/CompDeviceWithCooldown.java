@@ -111,7 +111,7 @@ public class CompDeviceWithCooldown implements Component {
             return this.totalTime;
         }
 
-        public long getProcessed() {
+        public long getServed() {
             return CompDeviceWithCooldown.this.device.getStats().getServed();
         }
 
@@ -149,7 +149,7 @@ public class CompDeviceWithCooldown implements Component {
                     this.cooldownTime,
                     this.totalTime,
                     this.getUtilization(),
-                    this.getProcessed());
+                    this.getServed());
         }
     }
 }

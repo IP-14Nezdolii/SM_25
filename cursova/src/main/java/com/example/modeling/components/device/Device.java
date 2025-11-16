@@ -44,7 +44,7 @@ public class Device {
                 done = true;
 
                 // stats
-                this.stats.addProcessed();
+                this.stats.addServed();
                 this.stats.addBusyTime(t.subtract(this.currentTime.subtract(time)).doubleValue());
                 this.stats.addWaitTime(this.currentTime.subtract(t).doubleValue());
 
@@ -130,7 +130,7 @@ public class Device {
             this.totalTime += time;
         }
 
-        public void addProcessed() {
+        public void addServed() {
             this.served += 1;
         }
 

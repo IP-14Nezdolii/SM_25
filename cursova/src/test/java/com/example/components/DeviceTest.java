@@ -73,7 +73,7 @@ public class DeviceTest
 
         var st = device.getStats();
 
-        assertEquals(1_000_000, st.getProcessed());
+        assertEquals(1_000_000, st.getServed());
         assertEquals(time, st.getBusyTime() + st.getCooldownTime(), 0.0001);
 
         assertEquals(0, st.getTotal() - st.getBusyTime() - st.getCooldownTime(), 0.0001);

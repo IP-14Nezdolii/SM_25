@@ -9,7 +9,7 @@ import java.util.Queue;
 import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.components.Component;
-import com.example.modeling.components.Constraint;
+//import com.example.modeling.components.Predicate;
 import com.example.modeling.components.Producer;
 
 public class Model {
@@ -37,13 +37,13 @@ public class Model {
 
                 queue.addAll(elem.getAllNext());
 
-                if (elem instanceof Constraint) {
-                    var con = (Constraint)elem;
+                // if (elem instanceof Predicate) {
+                //     var con = (Predicate)elem;
 
-                    if (con.getIfFailure().isPresent()) {
-                       queue.add(con.getIfFailure().get());
-                    }
-                }
+                //     if (con.getIfFailure().isPresent()) {
+                //        queue.add(con.getIfFailure().get());
+                //     }
+                // }
             }
         }
     }

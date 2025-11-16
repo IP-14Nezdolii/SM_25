@@ -34,7 +34,7 @@ public class FunRand {
         if (to <= from) 
             throw new IllegalArgumentException("Upper bound must be greater than lower bound");
 
-        return () -> from + (to - from) * nextRandom();
+        return () -> from + (to - from) * r.nextDouble();
     }
 
     public static Supplier<Double> getExponential(double mean) {

@@ -15,7 +15,7 @@ import com.example.CompDeviceWithCooldown;
 import com.example.modeling.Model;
 import com.example.modeling.Model.ModelStats;
 import com.example.modeling.components.Connection;
-import com.example.modeling.components.Constraint;
+import com.example.modeling.components.Predicate;
 import com.example.modeling.components.Queue;
 import com.example.modeling.components.device.Device;
 
@@ -89,9 +89,11 @@ public class Tester {
                     var name = st.getName();
 
                     if (index == 0) {
-                        row.createCell(i).setCellValue(name + "_utilization");
+                        row.createCell(i).setCellValue(name + "_utilization"); i++;
+                        row.createCell(i).setCellValue(name + "_served");
                     } else {
-                        row.createCell(i).setCellValue(st.getUtilization());
+                        row.createCell(i).setCellValue(st.getUtilization()); i++;
+                        row.createCell(i).setCellValue(st.getServed());
                     }
 
                 } else if (obj instanceof CompDeviceWithCooldown.Stats) {
@@ -99,9 +101,15 @@ public class Tester {
                     var name = st.getName();
 
                     if (index == 0) {
-                        row.createCell(i).setCellValue(name + "_utilization");
+                        row.createCell(i).setCellValue(name + "_utilization"); i++;
+                        row.createCell(i).setCellValue(name + "_busyTime"); i++;
+                        row.createCell(i).setCellValue(name + "_cooldownTime"); i++;
+                        row.createCell(i).setCellValue(name + "_served");
                     } else {
-                        row.createCell(i).setCellValue(st.getUtilization());
+                        row.createCell(i).setCellValue(st.getUtilization()); i++;
+                        row.createCell(i).setCellValue(st.getBusyTime()); i++;
+                        row.createCell(i).setCellValue(st.getCooldownTime()); i++;
+                        row.createCell(i).setCellValue(st.getServed());
                     }
 
                 } else if (obj instanceof Connection.Stats) {
@@ -114,14 +122,16 @@ public class Tester {
                         row.createCell(i).setCellValue(st.getThroughput());
                     }
 
-                } else  if (obj instanceof Constraint.Stats) {
-                    var st = (Constraint.Stats)obj;
+                } else  if (obj instanceof Predicate.Stats) {
+                    var st = (Predicate.Stats)obj;
                     var name = st.getName();
 
                     if (index == 0) {
-                        row.createCell(i).setCellValue(name + "_availability");
+                        row.createCell(i).setCellValue(name + "_availability"); i++;
+                        row.createCell(i).setCellValue(name + "_requests");
                     } else {
-                        row.createCell(i).setCellValue(st.getAvailability());
+                        row.createCell(i).setCellValue(st.getAvailability()); i++;
+                        row.createCell(i).setCellValue(st.getRequestsNumber());
                     }
 
                 } else  if (obj instanceof Queue.Stats) {
@@ -132,12 +142,16 @@ public class Tester {
                         row.createCell(i).setCellValue(name + "_avg_sz"); i++;
                         row.createCell(i).setCellValue(name + "_avg_wt"); i++;
                         row.createCell(i).setCellValue(name + "_pair_avg_sz"); i++;
-                        row.createCell(i).setCellValue(name + "_pair_avg_wt");
+                        row.createCell(i).setCellValue(name + "_pair_avg_wt"); i++;
+                        row.createCell(i).setCellValue(name + "_served"); i++;
+                        row.createCell(i).setCellValue(name + "_total_wait_time");
                     } else {
                         row.createCell(i).setCellValue(st.getAverageQueueSize()); i++;
                         row.createCell(i).setCellValue(st.getAvgWaitTime()); i++;
                         row.createCell(i).setCellValue(st.getAverageBatchQueueSize(2)); i++;
-                        row.createCell(i).setCellValue(st.getAvgBatchWaitTime(2));
+                        row.createCell(i).setCellValue(st.getAvgBatchWaitTime(2)); i++;
+                        row.createCell(i).setCellValue(st.getServed()); i++;
+                        row.createCell(i).setCellValue(st.getTotalWaitTime());
                     }
 
                 } else {

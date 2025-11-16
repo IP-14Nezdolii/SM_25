@@ -1,10 +1,12 @@
 package com.example;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import com.example.modeling.Model;
 import com.example.modeling.components.Connection;
-import com.example.modeling.components.Constraint;
+import com.example.modeling.components.Predicate;
 import com.example.modeling.components.Producer;
 import com.example.modeling.utils.FunRand;
 import com.example.modeling.utils.PriorityImpl;
@@ -13,6 +15,13 @@ public class AppTest {
 
     @Test
     public void test() {
+        var truckWork = FunRand.getCombined(List.of(
+                FunRand.getNotNullNorm(22, 10), 
+                FunRand.getUniform(2, 8))
+        );
+        var truckCooldown = FunRand.getNotNullNorm(18, 10);
+
+
         var producer1 = new Producer(FunRand.getErlang(8, 32), "Producer1");
 
         var q = new PairQueue("Queue");
@@ -23,12 +32,12 @@ public class AppTest {
         var con0 = new Connection(new PriorityImpl.Probability(), "Con0");
         var con1 = new Connection(new PriorityImpl.Probability(), "Con1");
 
-        var p1 = App.newTruckProcess("Truck1");
-        var p2 = App.newTruckProcess("Truck2");
-        var p3 = App.newTruckProcess("Truck3");
-        var p4 = App.newTruckProcess("Truck4");
+        var p1 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck1");
+        var p2 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck2");
+        var p3 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck3");
+        var p4 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck4");
 
-        var cons = new Constraint(() -> {
+        var pred = new Predicate(() -> {
             int countA = 0;
             int countB = 0;
 
@@ -42,12 +51,12 @@ public class AppTest {
 
             if (countA == 2) return false;
             return countB > countA;
-        }, "Constraint");
+        }, "Predicate");
 
         producer1.setNext(q);
-        q.setNext(cons);
+        q.setNext(pred);
 
-        cons.setNext(con0);
+        pred.setNext(con0);
 
         con0.addNext(a1, 1);
         con0.addNext(a2, 1);
@@ -67,7 +76,7 @@ public class AppTest {
         System.out.println(producer1.getStats());
         System.out.println(q.getStats());
         System.out.println(q.getStats().getAvgBatchWaitTime(2));
-        System.out.println(cons.getStats());
+        System.out.println(pred.getStats());
         System.out.println(con0.getStats());
         
         System.out.println(a1.getStats());

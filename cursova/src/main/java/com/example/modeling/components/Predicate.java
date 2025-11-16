@@ -9,15 +9,15 @@ import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.utils.Pair;
 
-public class Constraint implements Component {
+public class Predicate implements Component {
     private final Stats stats = new Stats();
     private final Supplier<Boolean> predicate;
     private final String name;
     
     private Optional<Component> next = Optional.empty();
-    private Optional<Component> ifFailure = Optional.empty();
+    //private Optional<Component> ifFailure = Optional.empty();
 
-    public Constraint(Supplier<Boolean> predicate, String name) {
+    public Predicate(Supplier<Boolean> predicate, String name) {
         this.predicate = predicate;
         this.name = name;
     }
@@ -27,13 +27,13 @@ public class Constraint implements Component {
         return this.name;
     } 
 
-    public void setIfFailure(Component ifFailure) {
-        this.ifFailure = Optional.of(ifFailure);
-    }
+    // public void setIfFailure(Component ifFailure) {
+    //     this.ifFailure = Optional.of(ifFailure);
+    // }
 
-    public Optional<Component> getIfFailure() {
-        return this.ifFailure;
-    }
+    // public Optional<Component> getIfFailure() {
+    //     return this.ifFailure;
+    // }
 
     public void setNext(Component next) {
         this.next = Optional.of(next);
@@ -80,9 +80,9 @@ public class Constraint implements Component {
         } else {
             this.stats.addFailure();
 
-            if (this.ifFailure.isPresent()) {
-                this.ifFailure.get().process();
-            }
+            // if (this.ifFailure.isPresent()) {
+            //     this.ifFailure.get().process();
+            // }
 
             return false;
         }
@@ -100,7 +100,7 @@ public class Constraint implements Component {
 
         public void checkAvailability(double time) {
             availability.add(Pair.createPair(
-                (Constraint.this.predicate.get() ? 1.0 : 0), 
+                (Predicate.this.predicate.get() ? 1.0 : 0), 
                 time)
             );
         }
@@ -144,7 +144,7 @@ public class Constraint implements Component {
         }
 
         public String getName() {
-            return Constraint.this.name;
+            return Predicate.this.name;
         }
 
         public String toString() {

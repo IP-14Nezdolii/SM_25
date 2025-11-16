@@ -9,11 +9,11 @@ import org.decimal4j.immutable.Decimal6f;
 import com.example.modeling.utils.Pair;
 
 public class Connection implements Component {
-    private final Stats stats = new Stats();
-    private final String name;
+    protected final Stats stats = new Stats();
+    protected final String name;
 
-    private final ArrayList<Pair<Component, Long>> next = new ArrayList<>();
-    private final NextPriority priority;
+    protected final ArrayList<Pair<Component, Long>> next = new ArrayList<>();
+    protected final NextPriority priority;
 
     public Connection(NextPriority priority, String name) {
         this.priority = priority;
