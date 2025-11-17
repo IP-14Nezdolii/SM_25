@@ -94,10 +94,17 @@ public class CompDeviceWithCooldown implements Component {
         return true;
     }
 
-    public class Stats {
+    public class Stats implements ComponentStats {
         private double workTime = 0;
         private double cooldownTime = 0;
         private double totalTime = 0;
+
+        @Override
+        public void clear() {
+            this.workTime = 0;
+            this.cooldownTime = 0;
+            this.totalTime = 0;
+        }
 
         public double getBusyTime() {
             return this.workTime;

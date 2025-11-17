@@ -101,10 +101,17 @@ public class Queue implements Component {
         return this.name;
     }
 
-    public class Stats {
+    public class Stats implements ComponentStats {
         private ArrayList<Pair<Long, Double>> queueSizies = new ArrayList<>();
         private long requests = 0;
         private long served = 0;
+
+        @Override
+        public void clear() {
+            this.queueSizies.clear();
+            this.requests = 0;
+            this.served = 0;
+        }
 
         public void record(double time) {
             this.queueSizies.add(Pair.createPair(Queue.this.size, time));

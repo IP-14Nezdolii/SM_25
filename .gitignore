@@ -2,4 +2,5 @@ target/
 petri_labs/
 
 *.txt
+*.xlsx
 *.xlx

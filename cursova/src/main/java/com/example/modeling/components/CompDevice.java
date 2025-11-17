@@ -41,7 +41,7 @@ public class CompDevice implements Component {
                 this.next.ifPresent(next -> next.process());
             }
         } else {
-            this.device.wait(time.doubleValue());
+            this.device.wait(time);
         }
     }
 

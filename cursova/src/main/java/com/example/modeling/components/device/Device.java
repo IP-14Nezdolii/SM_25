@@ -5,6 +5,8 @@ import java.util.function.Supplier;
 
 import org.decimal4j.immutable.Decimal6f;
 
+import com.example.modeling.components.Component.ComponentStats;
+
 public class Device {
     final Supplier<Double> rand;
     final Stats stats;
@@ -64,12 +66,12 @@ public class Device {
     /*
      * Throws exception if device is busy
      */
-    public void wait(double time) {
+    public void wait(Decimal6f time) {
         this.requiredTime.ifPresentOrElse(t -> {
             throw new IllegalStateException(
                 "Device is busy. Required time left: " + t.subtract(this.currentTime));
         }, () -> {
-            this.stats.addWaitTime(time);
+            this.stats.addWaitTime(time.doubleValue());
         });
     }
 
@@ -97,10 +99,17 @@ public class Device {
         return this.stats;
     };
 
-    public class Stats {
+    public class Stats implements ComponentStats{
         private double busyTime = 0;
         private double totalTime = 0;
         private long served = 0;
+
+        @Override
+        public void clear() {
+            this.busyTime = 0;
+            this.totalTime = 0;
+            this.served = 0;
+        }
 
         public double getBusyTime() {
             return this.busyTime;
@@ -119,7 +128,6 @@ public class Device {
                     ? this.busyTime / this.totalTime
                     : 0;
         }
-
 
         public void addBusyTime(double time) {
             this.busyTime += time;

@@ -9,11 +9,17 @@ public interface Component {
     List<Component> getAllNext();
     Optional<Component> getNextChosen();
 
-    Object getStats();
+    ComponentStats getStats();
     String getName();
 
     Optional<Decimal6f> getLeftTime();
 
     void run(Decimal6f time);
     boolean process();
+
+    public interface ComponentStats {
+        void clear();
+    }
 }
+
+

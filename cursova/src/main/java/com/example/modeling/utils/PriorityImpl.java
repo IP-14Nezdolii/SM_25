@@ -61,7 +61,7 @@ public final class PriorityImpl {
         }
 
         @Override
-        public Optional<Decimal6f> getWorkTime(ArrayList<Pair<Component, Long>> next) {
+        public Optional<Decimal6f> getLeftTime(ArrayList<Pair<Component, Long>> next) {
             return Optional.empty();
         }
     }

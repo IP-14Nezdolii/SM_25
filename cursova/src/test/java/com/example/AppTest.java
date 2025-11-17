@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import com.example.modeling.Model;
 import com.example.modeling.components.Connection;
-import com.example.modeling.components.Predicate;
 import com.example.modeling.components.Producer;
 import com.example.modeling.utils.FunRand;
 import com.example.modeling.utils.PriorityImpl;
@@ -26,8 +25,8 @@ public class AppTest {
 
         var q = new PairQueue("Queue");
 
-        var a1 = new CompDeviceWithCooldown(FunRand.getExponential(14), FunRand.getFixed(5), "Loader1");
-        var a2 = new CompDeviceWithCooldown(FunRand.getExponential(12),  FunRand.getFixed(5), "Loader2");
+        var a1 = new CompDeviceWithCooldown(FunRand.getExponential(7), FunRand.getFixed(5), "Loader1");
+        var a2 = new CompDeviceWithCooldown(FunRand.getExponential(7),  FunRand.getFixed(5), "Loader2");
 
         var con0 = new Connection(new PriorityImpl.Probability(), "Con0");
         var con1 = new Connection(new PriorityImpl.Probability(), "Con1");
@@ -37,7 +36,7 @@ public class AppTest {
         var p3 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck3");
         var p4 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck4");
 
-        var pred = new Predicate(() -> {
+        con0.setPredicator(() -> {
             int countA = 0;
             int countB = 0;
 
@@ -51,12 +50,10 @@ public class AppTest {
 
             if (countA == 2) return false;
             return countB > countA;
-        }, "Predicate");
+        });
 
         producer1.setNext(q);
-        q.setNext(pred);
-
-        pred.setNext(con0);
+        q.setNext(con0);
 
         con0.addNext(a1, 1);
         con0.addNext(a2, 1);
@@ -71,12 +68,11 @@ public class AppTest {
 
         var proc = new Model(producer1);
 
-        proc.run(480);
+        proc.run(1440);
 
         System.out.println(producer1.getStats());
         System.out.println(q.getStats());
         System.out.println(q.getStats().getAvgBatchWaitTime(2));
-        System.out.println(pred.getStats());
         System.out.println(con0.getStats());
         
         System.out.println(a1.getStats());

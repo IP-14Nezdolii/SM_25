@@ -113,4 +113,22 @@ public class ConnectionTest
         assertTrue( st1.getServed() == st2.getRequestsNumber() );
         assertTrue( st2.getRequestsNumber() == st3.getRequests() + st4.getRequests()  );
     }
+
+    @Test
+    public void predicatorTest()
+    {
+        var queue1 = new Queue("Queue1");
+        var conn1 = new Connection(new PriorityImpl.ProbabilityWithBusy(), "Connection1");
+        conn1.setPredicator(() -> false);
+
+        queue1.setNext(conn1);
+
+        for (int i = 0; i < 100; i++) {
+            queue1.process();
+        }
+     
+        var st1 = queue1.getStats(); 
+
+        assertTrue( st1.getServed() == 0 );
+    }
 }

@@ -9,8 +9,8 @@ import java.util.Queue;
 import org.decimal4j.immutable.Decimal6f;
 
 import com.example.modeling.components.Component;
-//import com.example.modeling.components.Predicate;
 import com.example.modeling.components.Producer;
+import com.example.modeling.components.Component.ComponentStats;
 
 public class Model {
     private final ArrayList<Component> orderedElems = new ArrayList<>();
@@ -22,6 +22,12 @@ public class Model {
 
     public Model(List<Producer> producers) {
         addNextBFS(producers);
+    }
+
+    public void clearStats() {
+        for (var stats : this.getStats().get()) {
+            stats.clear();
+        }
     }
 
     private void addNextBFS(List<Producer> producers) {
@@ -36,14 +42,6 @@ public class Model {
                 this.orderedElems.add(elem);
 
                 queue.addAll(elem.getAllNext());
-
-                // if (elem instanceof Predicate) {
-                //     var con = (Predicate)elem;
-
-                //     if (con.getIfFailure().isPresent()) {
-                //        queue.add(con.getIfFailure().get());
-                //     }
-                // }
             }
         }
     }
@@ -124,8 +122,8 @@ public class Model {
         }
 
         @SuppressWarnings("unchecked")
-        public ArrayList<Object> get() {
-            return (ArrayList<Object>) this.elemStats.clone();
+        public ArrayList<ComponentStats> get() {
+            return (ArrayList<ComponentStats>) this.elemStats.clone();
         }
 
         @Override
