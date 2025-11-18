@@ -14,20 +14,7 @@ public class PairQueue extends Queue {
     public boolean process() {
         this.stats.addRequest();
         this.enqueue();
-
-        if (this.next.isPresent()) {
-            var next = this.next.get();
-
-            while (next.getLeftTime().isEmpty() && this.size > 1) {
-                this.next.get().process();
-
-                this.dequeue();
-                this.dequeue();
-
-                this.stats.addServed();
-                this.stats.addServed();
-            }
-        }
+        this.tryServe();
         
         return true;
     }
@@ -35,7 +22,10 @@ public class PairQueue extends Queue {
     @Override
     public void run(Decimal6f time) {
         this.stats.record(time.doubleValue());
+        this.tryServe();
+    }
 
+    private void tryServe() {
         if (this.next.isPresent()) {
             var next = this.next.get();
 

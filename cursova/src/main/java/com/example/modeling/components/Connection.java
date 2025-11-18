@@ -10,25 +10,19 @@ import org.decimal4j.immutable.Decimal6f;
 import com.example.modeling.utils.Pair;
 
 public class Connection implements Component {
-    protected final Stats stats = new Stats();
-    protected final String name;
+    private final Stats stats = new Stats();
+    private final String name;
 
-    protected final ArrayList<Pair<Component, Long>> next = new ArrayList<>();
-    protected final NextPriority priority;
+    private final ArrayList<Pair<Component, Long>> next = new ArrayList<>();
+    private final NextRules priority;
 
-    private Supplier<Boolean> predicator = () -> true;
-
-    public Connection(NextPriority priority, String name) {
+    public Connection(NextRules priority, String name) {
         this.priority = priority;
         this.name = name;
     }
 
     public void addNext(Component next, long score) {
         this.next.add(Pair.createPair(next, score));
-    }
-
-    public void setPredicator(Supplier<Boolean> predicate) {
-        this.predicator = predicate;
     }
 
     @Override
@@ -40,7 +34,7 @@ public class Connection implements Component {
     public boolean process() {
         stats.addRequest();
 
-        if (predicator.get() == false) {
+        if (this.priority.predicator.get() == false) {
             return false;
         }
 
@@ -56,7 +50,7 @@ public class Connection implements Component {
 
     @Override
     public Optional<Decimal6f> getLeftTime() {
-        if (predicator.get() == false) {
+        if (this.priority.predicator.get() == false) {
             return Optional.of(Decimal6f.MAX_VALUE);
         }
 
@@ -80,7 +74,7 @@ public class Connection implements Component {
 
         private void checkAvailability(double time) {
             availability.add(Pair.createPair(
-                (Connection.this.predicator.get() ? 1.0 : 0), 
+                (Connection.this.priority.predicator.get() ? 1.0 : 0), 
                 time)
             );
         }
@@ -161,7 +155,8 @@ public class Connection implements Component {
         return this.name;
     }  
 
-    public static abstract class NextPriority {
+    public static abstract class NextRules {
+        private Supplier<Boolean> predicator = () -> true;
 
         public abstract Optional<Component> getNextChosen(ArrayList<Pair<Component, Long>> allNext);
 
@@ -179,6 +174,10 @@ public class Connection implements Component {
             return time != Decimal6f.MAX_VALUE 
                 ? Optional.of(time)
                 : Optional.empty();
+        }
+
+        public void setPredicator(Supplier<Boolean> predicator) {
+            this.predicator = predicator;
         }
     }
 }

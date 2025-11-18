@@ -9,7 +9,7 @@ import com.example.modeling.Model;
 import com.example.modeling.components.Connection;
 import com.example.modeling.components.Producer;
 import com.example.modeling.utils.FunRand;
-import com.example.modeling.utils.PriorityImpl;
+import com.example.modeling.utils.NextRulesImpl;
 
 public class Tester {
     static final int N_SAMPLES = 1000;
@@ -17,8 +17,9 @@ public class Tester {
 
     static final String savePath = "C:\\Users\\vladi\\.vscode\\Git\\SM_25\\SM_25\\cursova\\";
     static final String verificationBaseName = "verification";
+    static final String transPeriodName = "trans";
 
-    public static void transitionPeriodTest() {
+    public static void transPeriodTest() {
         var producerWork = FunRand.getErlang(8, 32);
         var loader1Work = FunRand.getExponential(14);
         var loader2Work = FunRand.getExponential(12);
@@ -28,6 +29,33 @@ public class Tester {
             FunRand.getUniform(2, 8))
         );
         var truckCooldown = FunRand.getNotNullNorm(18, 10);
+
+        var init = getBaseModelInitializer(
+            producerWork,
+            loader1Work,
+            loader2Work,
+            loaderCooldown,
+            truckWork,
+            truckCooldown
+        );
+
+        var preRunTimes = List.of(0, 2000, 4000, 6000, 8000);
+
+        var statsSaver = new StatsSaver();
+
+        for (int i = 0; i < preRunTimes.size(); i++) {
+            for (int j = 0; j < N_SAMPLES; j++) {
+                var model = init.get();
+
+                model.run(preRunTimes.get(i));
+                model.getStats().clear();
+
+                model.run(TIME);
+                statsSaver.addStats(model.getStats(), i);
+            }
+        }
+
+        statsSaver.save(savePath + transPeriodName + ".xlsx");
     }
 
     public static void verificationTest() {
@@ -114,17 +142,18 @@ public class Tester {
             )
         );
 
+        var statsSaver = new StatsSaver();
+
         for (int i = 0; i < lst.size(); i++) {
-            var statsSaver = new StatsSaver();
 
             for (int j = 0; j < N_SAMPLES; j++) {
                 var model = lst.get(i).get();
 
                 model.run(TIME);
-                statsSaver.addStats(model.getStats());
+                statsSaver.addStats(model.getStats(), i);
             }
-            statsSaver.save(savePath + verificationBaseName + i + ".xlsx");
         }
+        statsSaver.save(savePath + verificationBaseName + ".xlsx");
     }
 
     public static Supplier<Model> getBaseModelInitializer(
@@ -143,15 +172,16 @@ public class Tester {
             var a1 = new CompDeviceWithCooldown(loader1Work, loaderCooldown, "Loader1");
             var a2 = new CompDeviceWithCooldown(loader2Work,  loaderCooldown, "Loader2");
 
-            var con0 = new Connection(new PriorityImpl.Probability(), "Con0");
-            var con1 = new Connection(new PriorityImpl.Probability(), "Con1");
+            var rule0 = new NextRulesImpl.Probability();
+            var con0 = new Connection(rule0, "Con0");
+            var con1 = new Connection(new NextRulesImpl.Probability(), "Con1");
 
             var p1 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck1");
             var p2 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck2");
             var p3 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck3");
             var p4 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck4");
 
-            con0.setPredicator(() -> {
+            rule0.setPredicator(() -> {
                 int countA = 0;
                 int countB = 0;
 

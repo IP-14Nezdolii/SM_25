@@ -24,12 +24,6 @@ public class Model {
         addNextBFS(producers);
     }
 
-    public void clearStats() {
-        for (var stats : this.getStats().get()) {
-            stats.clear();
-        }
-    }
-
     private void addNextBFS(List<Producer> producers) {
         Queue<Component> queue = new LinkedList<>();
 
@@ -139,6 +133,12 @@ public class Model {
             sb.append("]\n");
 
             return sb.toString();
+        }
+
+        public void clear() {
+            for (var stats : this.get()) {
+                stats.clear();
+            }
         }
     }
 

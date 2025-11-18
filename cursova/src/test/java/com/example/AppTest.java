@@ -8,7 +8,7 @@ import com.example.modeling.Model;
 import com.example.modeling.components.Connection;
 import com.example.modeling.components.Producer;
 import com.example.modeling.utils.FunRand;
-import com.example.modeling.utils.PriorityImpl;
+import com.example.modeling.utils.NextRulesImpl;
 
 public class AppTest {
 
@@ -28,15 +28,16 @@ public class AppTest {
         var a1 = new CompDeviceWithCooldown(FunRand.getExponential(7), FunRand.getFixed(5), "Loader1");
         var a2 = new CompDeviceWithCooldown(FunRand.getExponential(7),  FunRand.getFixed(5), "Loader2");
 
-        var con0 = new Connection(new PriorityImpl.Probability(), "Con0");
-        var con1 = new Connection(new PriorityImpl.Probability(), "Con1");
+        var prob0 = new NextRulesImpl.Probability();
+        var con0 = new Connection(prob0, "Con0");
+        var con1 = new Connection(new NextRulesImpl.Probability(), "Con1");
 
         var p1 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck1");
         var p2 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck2");
         var p3 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck3");
         var p4 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck4");
 
-        con0.setPredicator(() -> {
+        prob0.setPredicator(() -> {
             int countA = 0;
             int countB = 0;
 

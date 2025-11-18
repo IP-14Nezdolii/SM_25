@@ -104,6 +104,8 @@ public class CompDeviceWithCooldown implements Component {
             this.workTime = 0;
             this.cooldownTime = 0;
             this.totalTime = 0;
+            CompDeviceWithCooldown.this.device.getStats().clear();
+            CompDeviceWithCooldown.this.cooldown.getStats().clear();
         }
 
         public double getBusyTime() {

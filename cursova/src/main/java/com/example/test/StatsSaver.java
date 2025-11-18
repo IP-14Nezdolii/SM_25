@@ -15,12 +15,13 @@ import com.example.modeling.Model.ModelStats;
 import com.example.modeling.components.Connection;
 import com.example.modeling.components.Queue;
 import com.example.modeling.components.device.Device;
+import com.example.modeling.utils.Pair;
 
 public class StatsSaver {
-    private final ArrayList<ModelStats> stats = new ArrayList<>();
+    private final ArrayList<Pair<ModelStats, Integer>> stats = new ArrayList<>();
     
-    public void  addStats(ModelStats stat) {
-        this.stats.add(stat);
+    public void  addStats(ModelStats stat, int testMask) {
+        this.stats.add(Pair.createPair(stat, testMask));
     }
 
     public void save(String filename) {
@@ -41,30 +42,36 @@ public class StatsSaver {
                 throw new IllegalStateException("Cannot save stats: no data collected.");
             }
 
-            this.addRow(sheet, stats.get(0), 0);
+            Pair<ModelStats, Integer> pair = stats.get(0);
+
+            this.addRow(sheet, pair.get0(),pair.get1(), 0);
+
             for (int i = 0; i < stats.size(); i++) {
-                this.addRow(sheet, stats.get(i), i + 1);
+                pair = stats.get(i);
+                this.addRow(sheet, pair.get0(), pair.get1(), i + 1);
             }
 
             workbook.write(fileOut);
             System.out.println("File created: " + filename);
-            
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    void addRow(Sheet sheet, ModelStats data, int index) {
+    void addRow(Sheet sheet, ModelStats data, int testMask, int index) {
         Row row = sheet.createRow(index);
         var fields = data.get();
 
         if (index == 0) {
-            row.createCell(0).setCellValue("total_time");
+            row.createCell(0).setCellValue("test_mask");
+            row.createCell(1).setCellValue("total_time");
         } else {
-            row.createCell(0).setCellValue(data.getTotalTime());
+            row.createCell(0).setCellValue(testMask);
+            row.createCell(1).setCellValue(data.getTotalTime());
         }
 
-        int i = 1;
+        int i = 2;
         for (var obj : fields) {
 
             if (obj instanceof Device.Stats) {
