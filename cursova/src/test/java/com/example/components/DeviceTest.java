@@ -78,5 +78,7 @@ public class DeviceTest
 
         assertEquals(0, st.getTotal() - st.getBusyTime() - st.getCooldownTime(), 0.0001);
         assertEquals(1_000_000 * 5, st.getCooldownTime(), 0.0001);
+
+        assertEquals(1.0, st.getUtilization(), 0.001);
     }
 }

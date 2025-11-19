@@ -30,7 +30,9 @@ public class PairQueue extends Queue {
             var next = this.next.get();
 
             while (next.getLeftTime().isEmpty() && this.size > 1) {
-                next.process();
+                if (next.process() == false) {
+                    throw new IllegalStateException("Can't process!");
+                }
 
                 this.dequeue();
                 this.dequeue();

@@ -66,7 +66,9 @@ public class Queue implements Component {
             var next = this.next.get();
 
             while (next.getLeftTime().isEmpty() && this.size > 0) {
-                next.process();
+                if (next.process() == false) {
+                    throw new IllegalStateException("Can't process!");
+                }
 
                 this.dequeue();
                 this.stats.addServed();

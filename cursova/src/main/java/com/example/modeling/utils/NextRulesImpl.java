@@ -50,7 +50,8 @@ public final class NextRulesImpl {
             double cumulative = 0.0;
 
             for (Pair<Component, Long> p : next) {
-                cumulative += p.get1();
+                cumulative += p.get1().doubleValue();
+                
                 if (r <= cumulative) {
                     return Optional.of(p.get0());
                 }
