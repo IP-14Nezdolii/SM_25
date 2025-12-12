@@ -1,96 +1,163 @@
 package com.example;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.example.modeling.Device;
 import com.example.modeling.Model;
-import com.example.modeling.components.Connection;
-import com.example.modeling.components.Producer;
+import com.example.modeling.utils.Status;
+import com.example.modeling.Producer;
+import com.example.modeling.Connection;
+import com.example.modeling.SMO;
 import com.example.modeling.utils.FunRand;
-import com.example.modeling.utils.NextRulesImpl;
 
 public class AppTest {
 
     @Test
-    public void test() {
-        double TIME = 1440;
+    public void test1() {
+        ArrayList<SMO> list = new ArrayList<>();
 
-        var truckWork = FunRand.getCombined(List.of(
-                FunRand.getNotNullNorm(22, 10), 
-                FunRand.getUniform(2, 8))
-        );
-        var truckCooldown = FunRand.getNotNullNorm(18, 10);
+        Producer producer = new Producer(
+                "Producer1",
+                List.of(new Device(FunRand.getFixed(5), "Device1")),
+                1);
 
+        Connection connection = new Connection();
 
-        var producer1 = new Producer(FunRand.getErlang(8, 32), "Producer1");
+        SMO smo = new SMO(
+                "SMO1",
+                1000,
+                List.of(
+                        new Device(FunRand.getFixed(25), "Device2"),
+                        new Device(FunRand.getFixed(25), "Device3")),
+                2);
 
-        var q = new PairQueue("Queue");
-        
-        var a1 = new CompDeviceWithCooldown(FunRand.getExponential(14), FunRand.getFixed(5), "Loader1");
-        var a2 = new CompDeviceWithCooldown(FunRand.getExponential(12),  FunRand.getFixed(5), "Loader2");
+        producer.setNext(connection);
+        connection.addNext(smo);
 
-        var prob0 = new NextRulesImpl.Probability();
-        var con0 = new Connection(prob0, "Con0");
-        var con1 = new Connection(new NextRulesImpl.Probability(), "Con1");
+        list.add(producer);
+        list.add(smo);
 
-        var p1 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck1");
-        var p2 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck2");
-        var p3 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck3");
-        var p4 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck4");
-        var p5 = new CompDeviceWithCooldown(truckWork, truckCooldown, "Truck5");
+        Model model = new Model(list);
+        model.run(100.0);
 
-        prob0.setPredicator(() -> {
-            int countA = 0;
-            int countB = 0;
+        model.getStats().forEach((stats) -> System.out.println(stats));
+    }
 
-            if (a1.getLeftTime().isPresent()) countA++;
-            if (a2.getLeftTime().isPresent()) countA++;
+    @Test
+    public void test2() {
+        ArrayList<SMO> list = new ArrayList<>();
 
-            if (p1.getLeftTime().isEmpty()) countB++;
-            if (p2.getLeftTime().isEmpty()) countB++;
-            if (p3.getLeftTime().isEmpty()) countB++;
-            if (p4.getLeftTime().isEmpty()) countB++;
-            if (p5.getLeftTime().isEmpty()) countB++;
+        Producer producer = new Producer(
+                "Producer1",
+                List.of(new Device(FunRand.getFixed(5), "Device1")),
+                1);
 
-            if (countA == 3) return false;
-            return countB > countA;
-        });
+        Connection connection = new Connection();
 
-        producer1.setNext(q);
-        q.setNext(con0);
+        var device2 = new Device(FunRand.getFixed(15), "Device2");
 
-        con0.addNext(a1, 1);
-        con0.addNext(a2, 1);
+        SMO smo1 = new SMO(
+                "SMO1",
+                1000,
+                List.of(
+                        device2),
+                2);
 
-        a1.setNext(con1);
-        a2.setNext(con1);
+        SMO smo2 = new SMO(
+                "SMO2",
+                1000,
+                List.of(
+                        new Device(FunRand.getFixed(15), "Device3")),
+                2);
 
-        con1.addNext(p1, 1);
-        con1.addNext(p2, 1);
-        con1.addNext(p3, 1);
-        con1.addNext(p4, 1);
-        con1.addNext(p5, 1);
+        producer.setNext(connection);
+        connection.addNext(smo1);
+        connection.addNext(smo2, () -> device2.getStatus() == Status.BUSY);
 
-        var proc = new Model(producer1);
+        list.add(producer);
+        list.add(smo1);
+        list.add(smo2);
 
-        proc.run(TIME * 10);
-        proc.getStats().clear();
-        proc.run(TIME);
+        Model model = new Model(list);
+        model.run(100.0);
 
-        System.out.println(producer1.getStats());
-        System.out.println(q.getStats());
-        System.out.println(con0.getStats());
-        
-        System.out.println(a1.getStats());
-        System.out.println(a2.getStats());
+        model.getStats().forEach((stats) -> System.out.println(stats));
+    }
 
-        System.out.println(con1.getStats());
+    @Test
+    public void test3() {
+        ArrayList<SMO> list = new ArrayList<>();
 
-        System.out.println(p1.getStats());
-        System.out.println(p2.getStats());
-        System.out.println(p3.getStats());
-        System.out.println(p4.getStats());
-        System.out.println(p5.getStats());
+        Producer producer = new Producer(
+                "Producer1",
+                List.of(new Device(FunRand.getFixed(5), "Device1")),
+                1);
+
+        Connection connection = new Connection(2);
+
+        var device2 = new Device(FunRand.getFixed(15), "Device2");
+
+        SMO smo1 = new SMO(
+                "SMO1",
+                1000,
+                List.of(
+                        device2),
+                2);
+
+        SMO smo2 = new SMO(
+                "SMO2",
+                1000,
+                List.of(
+                        new Device(FunRand.getFixed(15), "Device3")),
+                2);
+
+        producer.setNext(connection);
+        connection.addNext(smo1);
+        connection.addNext(smo2, () -> device2.getStatus() == Status.BUSY);
+
+        list.add(producer);
+        list.add(smo1);
+        list.add(smo2);
+
+        Model model = new Model(list);
+        model.run(100.0);
+
+        model.getStats().forEach((stats) -> System.out.println(stats));
+    }
+
+    @Test
+    public void test4() {
+        ArrayList<SMO> list = new ArrayList<>();
+
+        var device2 = new Device(FunRand.getFixed(3), "Device2");
+
+        var device3 = new Device(FunRand.getFixed(2), "Device3");
+        device3.setStatus(Status.DONE);
+
+        SMO producer = new Producer("Producer1", List.of(new Device(FunRand.getFixed(2.5), "Device1")), 1);
+        SMO smo1 = new SMO("SMO1", 1, List.of(device2), 2);
+
+        SMO rest = new SMO("Rest1", List.of(device3), 3);
+
+        Connection connection1 = new Connection(2);
+        Connection connection2 = new Connection();
+
+        producer.setNext(connection1);
+        connection1.addNext(smo1, () -> device3.getStatus() == Status.DONE);
+
+        connection2.addNext(rest, () -> device2.getStatus() == Status.DONE);
+        rest.setNext(connection2);
+
+        list.add(producer);
+        list.add(smo1);
+        list.add(rest);
+
+        Model model = new Model(list);
+        model.run(100.0);
+
+        model.getStats().forEach((stats) -> System.out.println(stats));
     }
 }
