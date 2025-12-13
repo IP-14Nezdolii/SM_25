@@ -75,9 +75,8 @@ class DeviceTest {
         device.process(); // Left time = 10.0
 
         Decimal6f step = Decimal6f.valueOf(4.0);
-        boolean isFinished = device.run(step);
+        device.run(step);
 
-        assertFalse(isFinished);
         assertEquals(Status.BUSY, device.getStatus());
         assertEquals(Decimal6f.valueOf(6.0), device.getLeftTime()); // 10 - 4 = 6
         assertEquals(4.0, device.getStats().getBusyTime());
@@ -90,9 +89,8 @@ class DeviceTest {
         device.process(); // Left time = 10.0
 
         Decimal6f step = Decimal6f.valueOf(10.0);
-        boolean isFinished = device.run(step);
+        device.run(step);
 
-        assertTrue(isFinished);
         assertEquals(Status.DONE, device.getStatus());
         assertEquals(Decimal6f.MAX_VALUE, device.getLeftTime()); // Повертається до MAX при DONE
         assertEquals(1, device.getStats().getServed());

@@ -261,7 +261,8 @@ public class ModelInitProducer {
                         truck3St.getServed() +
                         truck4St.getServed()
                     );
-                }
+                },
+                () -> (smoSt.getTotalWaitTime() + smoD.getDoneTime()) / smoD.getServed()
             );
 
             return Pair.createPair(model, calc);

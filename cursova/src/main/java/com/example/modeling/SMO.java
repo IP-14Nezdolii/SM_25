@@ -225,7 +225,6 @@ public class SMO {
     }
 
     public class Stats {
-        private final int maxQueueSize;
         private final ArrayList<Device.Stats> deviceStats = new ArrayList<>();
 
         private double totalWaitTime = 0;
@@ -237,16 +236,10 @@ public class SMO {
             deviceStats.addAll(
                 devices.stream().map(Device::getStats).toList()
             );
-
-            this.maxQueueSize = SMO.this.maxQueueSize;
         }
 
         public ArrayList<Device.Stats> getDeviceStats() {
             return this.deviceStats;
-        }
-
-        public int getMaxQueueSize() {
-            return this.maxQueueSize;
         }
 
         public void clear() {
@@ -308,7 +301,7 @@ public class SMO {
             String smoFormat;
             String smoStatsString;
 
-            if (this.maxQueueSize == 0) {
+            if (SMO.this.maxQueueSize == 0) {
                 smoFormat = "%s:{requests=%d, served=%d}";
 
                 smoStatsString = String.format(

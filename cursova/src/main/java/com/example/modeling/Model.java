@@ -8,7 +8,6 @@ import org.decimal4j.immutable.Decimal6f;
 
 public class Model {
     private final ArrayList<SMO> elems;
-    private Decimal6f totalTime = Decimal6f.ZERO;
 
     public Model(ArrayList<SMO> elems) {
         if (elems.isEmpty()) {
@@ -21,7 +20,6 @@ public class Model {
 
     public void run(double runTime) {
         Decimal6f leftTimeSim = Decimal6f.valueOf(runTime);
-        this.totalTime = this.totalTime.add(leftTimeSim);
 
         while (leftTimeSim.isGreaterThan(Decimal6f.ZERO)) {
             Decimal6f minLeftTime = elems.stream()
@@ -43,10 +41,6 @@ public class Model {
 
             leftTimeSim = leftTimeSim.subtract(step);
         }
-    }
-
-    public Decimal6f getTotalTime() {
-        return this.totalTime;
     }
 
     public void clearStats() {

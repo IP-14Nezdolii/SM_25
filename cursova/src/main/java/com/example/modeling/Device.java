@@ -39,8 +39,8 @@ public class Device {
     /*
      * Throws exception if device is not BUSY
      */
-    public boolean run(Decimal6f time) {
-        return switch (this.status) {
+    public void run(Decimal6f time) {
+        switch (this.status) {
             case Status.BUSY -> {
                 if (time.isGreaterThan(this.leftTime)) {
                     throw new IllegalArgumentException(
@@ -53,9 +53,6 @@ public class Device {
                 if (this.leftTime.isEqualTo(Decimal6f.ZERO)) {
                     this.status = Status.DONE;
                     this.stats.addServed();
-                    yield true;
-                } else {
-                    yield false;
                 }
             }
             case Status.DONE, Status.READY -> {

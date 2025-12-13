@@ -66,6 +66,7 @@ public class StatsSaver {
             row.createCell(5).setCellValue("m_truck_util");
             row.createCell(6).setCellValue("productivity");
             row.createCell(7).setCellValue("processing_time");
+            row.createCell(8).setCellValue("mean_wait_q");
         } else {
             row.createCell(0).setCellValue(testMask);
             row.createCell(1).setCellValue(data.prod_served().get());
@@ -75,6 +76,7 @@ public class StatsSaver {
             row.createCell(5).setCellValue(data.m_truck_util().get());
             row.createCell(6).setCellValue(data.productivity().get());
             row.createCell(7).setCellValue(data.processing_time().get());
+            row.createCell(7).setCellValue(data.mean_wait_q().get());
         }
     }
 }

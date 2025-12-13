@@ -9,5 +9,6 @@ public record ResultCalculator(
     Supplier<Double> m_loader_util,
     Supplier<Double> m_truck_util,
     Supplier<Double> productivity,
-    Supplier<Double> processing_time) {
+    Supplier<Double> processing_time,
+    Supplier<Double> mean_wait_q) {
 }
