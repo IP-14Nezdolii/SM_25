@@ -33,8 +33,15 @@ public class Model {
                     ? minLeftTime
                     : leftTimeSim;
 
-            this.elems.forEach((elem) -> elem.run(step));
-            this.elems.forEach((elem) -> elem.handleEvents());
+            for (SMO smo : elems) {
+                smo.run(step);
+            }
+
+            for (SMO smo : elems) {
+                smo.handleEvents();
+            }
+            // this.elems.forEach((elem) -> elem.run(step));
+            // this.elems.forEach((elem) -> elem.handleEvents());
 
             leftTimeSim = leftTimeSim.subtract(step);
         }
@@ -45,6 +52,6 @@ public class Model {
     }
 
     public List<SMO.Stats> getStats() {
-        return this.elems.stream().map(SMO::getStats).toList();
+        return this.elems.stream().map(SMO::getStats).toList().reversed();
     }
 }

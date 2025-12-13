@@ -22,6 +22,7 @@ public class SMO {
     protected ArrayDeque<Device> doneDevices = new ArrayDeque<>();
 
     protected Optional<Connection> next = Optional.empty();
+    protected boolean selfCheck = false;
 
     public SMO(
         String name,
@@ -101,6 +102,10 @@ public class SMO {
     }
 
     public Status getStatus() {
+        if (this.selfCheck) {
+            return Status.READY;
+        }
+
         if (this.readyDevices.isEmpty() == false) {
             return Status.READY;
         }
@@ -170,12 +175,17 @@ public class SMO {
 
             this.next.ifPresentOrElse((next) -> {
 
+                this.selfCheck = true;
+
                 while (this.doneDevices.isEmpty() == false && next.getStatus() == Status.READY) {
                     Device device = this.doneDevices.pop();
-                    next.process();
                     device.setStatus(Status.READY);
                     this.readyDevices.add(device);
+
+                    next.process();
                 }
+
+                this.selfCheck = false;
             }, () -> {
                 this.doneDevices.forEach(device -> device.setStatus(Status.READY));
                 this.readyDevices.addAll(this.doneDevices);
@@ -215,6 +225,7 @@ public class SMO {
     }
 
     public class Stats {
+        private final int maxQueueSize;
         private final ArrayList<Device.Stats> deviceStats = new ArrayList<>();
 
         private double totalWaitTime = 0;
@@ -226,6 +237,16 @@ public class SMO {
             deviceStats.addAll(
                 devices.stream().map(Device::getStats).toList()
             );
+
+            this.maxQueueSize = SMO.this.maxQueueSize;
+        }
+
+        public ArrayList<Device.Stats> getDeviceStats() {
+            return this.deviceStats;
+        }
+
+        public int getMaxQueueSize() {
+            return this.maxQueueSize;
         }
 
         public void clear() {
@@ -283,16 +304,31 @@ public class SMO {
 
         @Override
         public String toString() {
-            String smoFormat = "%s:{requests=%d, served=%d, avg_wait_time=%.4f, avg_queue_size=%.4f}";
+            String smoFormat;
+            String smoStatsString;
+
+            if (this.maxQueueSize == 0) {
+                smoFormat = "%s:{requests=%d, served=%d}";
+
+                smoStatsString = String.format(
+                    smoFormat,
+                    this.getName(),
+                    this.requests,
+                    this.served
+                );
+                
+            } else {
+                smoFormat = "%s:{requests=%d, served=%d, avg_wait_time=%.4f, avg_queue_size=%.4f}";
             
-            String smoStatsString = String.format(
-                smoFormat,
-                this.getName(),
-                this.requests,
-                this.served,
-                this.getAverageWaitTime(),
-                this.getAverageQueueSize()
-            );
+                smoStatsString = String.format(
+                    smoFormat,
+                    this.getName(),
+                    this.requests,
+                    this.served,
+                    this.getAverageWaitTime(),
+                    this.getAverageQueueSize()
+                );
+            }
 
             StringBuilder devicesStats = new StringBuilder();
             

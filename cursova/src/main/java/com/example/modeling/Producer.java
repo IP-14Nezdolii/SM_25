@@ -23,6 +23,21 @@ public class Producer extends SMO {
         this.readyDevices.clear();
     }
 
+    public Producer(
+        String name,
+        Device device,
+        int priority
+    ) {
+        super(name, 0, List.of(device), priority);
+
+        device.process();
+
+        this.stats.addRequest();
+        this.busyDevices.add(device);
+
+        this.readyDevices.clear();
+    }
+
     @Override
     public void process() {
         throw new UnsupportedOperationException("Producer cannot process incoming tasks");
