@@ -106,13 +106,19 @@ public class Device {
 
     public class Stats {
         private double busyTime = 0;
+        private double doneTime = 0;
         private double totalTime = 0;
         private long served = 0;
 
         public void clear() {
             this.busyTime = 0;
+            this.doneTime = 0;
             this.totalTime = 0;
             this.served = 0;
+        }
+
+        public double getDoneTime() {
+            return this.doneTime;
         }
 
         public double getBusyTime() {
@@ -133,6 +139,10 @@ public class Device {
         }
 
         public void addWaitTime(double time) {
+            if (Device.this.getStatus() == Status.DONE) {
+                this.doneTime += time;
+            }
+
             this.totalTime += time;
         }
 

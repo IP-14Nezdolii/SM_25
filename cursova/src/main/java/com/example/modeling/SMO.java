@@ -251,10 +251,11 @@ public class SMO {
 
         public void clear() {
             this.deviceStats.forEach(device -> device.clear());
+            
             this.totalWaitTime = 0;
-
-            this.totalTime = 0;
+            this.requests = 0;
             this.served = 0;
+            this.totalTime = 0;
         }
 
         public double getTotalTime() {

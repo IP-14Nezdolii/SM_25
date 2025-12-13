@@ -40,8 +40,6 @@ public class Model {
             for (SMO smo : elems) {
                 smo.handleEvents();
             }
-            // this.elems.forEach((elem) -> elem.run(step));
-            // this.elems.forEach((elem) -> elem.handleEvents());
 
             leftTimeSim = leftTimeSim.subtract(step);
         }
@@ -49,6 +47,12 @@ public class Model {
 
     public Decimal6f getTotalTime() {
         return this.totalTime;
+    }
+
+    public void clearStats() {
+        for (SMO smo : elems) {
+            smo.getStats().clear();
+        }
     }
 
     public List<SMO.Stats> getStats() {
