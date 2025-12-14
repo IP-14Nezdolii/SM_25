@@ -88,7 +88,7 @@ public class Tester {
     public static void transPeriodTest() {
         var statsSaver = new StatsSaver();
 
-        var preRunTimes = List.of(0, 4_000, 8_000, 12_000, 16_000);
+        var preRunTimes = List.of(0, 4_000, 8_000, 12_000, 16_000, 20_000);
         for (Integer preRunTime : preRunTimes) {
 
             Supplier<Pair<Model, ResultCalculator>> init = 
@@ -114,7 +114,7 @@ public class Tester {
         Supplier<Pair<Model, ResultCalculator>> init = 
             ModelInitProducer.getModelInit(defaultParams);
 
-        for (int j = 0; j < N_SAMPLES; j++) {
+        for (int j = 0; j < 10_000; j++) {
             var model = init.get();
 
             model.get0().run(TRANS_PERIOD);

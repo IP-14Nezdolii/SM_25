@@ -76,7 +76,7 @@ public class StatsSaver {
             row.createCell(5).setCellValue(data.m_truck_util().get());
             row.createCell(6).setCellValue(data.productivity().get());
             row.createCell(7).setCellValue(data.processing_time().get());
-            row.createCell(7).setCellValue(data.mean_wait_q().get());
+            row.createCell(8).setCellValue(data.mean_wait_q().get());
         }
     }
 }
