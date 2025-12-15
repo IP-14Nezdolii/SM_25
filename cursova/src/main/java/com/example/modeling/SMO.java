@@ -86,7 +86,7 @@ public class SMO {
 
     public Status getStatus() {
         if (this.selfCheck) {
-        return Status.READY;
+            return Status.READY;
         }
 
         for (Device device : devices) {
@@ -127,7 +127,7 @@ public class SMO {
     protected List<Device> getReadyDevices() {
         return this.devices.stream()
                 .filter(device -> device.getStatus() == Status.READY)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void processDevice(List<Device> readyDevices) {
@@ -158,7 +158,7 @@ public class SMO {
         var readyDevices = this.getReadyDevices();
 
         while (true) {
-            
+
             while (readyDevices.isEmpty() == false && this.queueSize > 0) {
                 this.queueSize -= 1;
                 this.processDevice(readyDevices);
@@ -178,7 +178,7 @@ public class SMO {
 
                 this.selfCheck = false;
             }, () -> {
-                for (Device device : this.devices) { 
+                for (Device device : this.devices) {
                     if (device.getStatus() == Status.DONE) {
                         device.setStatus(Status.READY);
                         readyDevices.add(device);
@@ -202,7 +202,8 @@ public class SMO {
                 device.run(time);
 
                 switch (device.getStatus()) {
-                    case BUSY -> {}
+                    case BUSY -> {
+                    }
                     case DONE -> this.stats.addServed();
                     case READY -> throw new IllegalStateException("Device is READY while being BUSY");
                 }
