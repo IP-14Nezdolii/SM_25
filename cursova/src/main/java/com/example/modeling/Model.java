@@ -21,7 +21,7 @@ public class Model {
     public void run(double runTime) {
         Decimal6f leftTimeSim = Decimal6f.valueOf(runTime);
 
-        while (leftTimeSim.isGreaterThan(Decimal6f.ZERO)) {
+        while (leftTimeSim.isEqualTo(Decimal6f.ZERO)) {
             Decimal6f minLeftTime = elems.stream()
                     .map(SMO::getLeftTime)
                     .min(Decimal6f::compareTo)

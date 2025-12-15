@@ -61,32 +61,27 @@ public class SMO {
 
     public SMO(
         String name,
+        int maxQueueSize, 
+        Device device, 
+        int priority
+    ) {
+        this(name, maxQueueSize, List.of(device), priority);
+    }
+
+    public SMO(
+        String name,
+        Device device, 
+        int priority
+    ) {
+        this(name, 0, List.of(device), priority);
+    }
+
+    public SMO(
+        String name,
         List<Device> devices, 
         int priority
     ) {
-        this.name = name;
-        this.maxQueueSize = 0;
-        this.queueSize = 0;
-
-        this.eventPriority = priority;
-
-        if (devices == null) {
-            throw new IllegalArgumentException("Devices list must be not null");
-        }
-
-        if (devices.isEmpty()) {
-            throw new IllegalArgumentException("Devices list must be not empty");
-        }
-
-        for (Device device : devices) {
-            switch (device.getStatus()) {
-                case READY -> this.readyDevices.add(device);
-                case BUSY -> this.busyDevices.add(device);
-                case DONE -> this.doneDevices.add(device);
-            }
-        }
-
-        this.stats = new Stats(devices);
+        this(name, 0, devices, priority);
     }
 
     public Stats getStats() {

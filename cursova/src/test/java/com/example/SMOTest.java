@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,7 +40,7 @@ class SMOTest {
             new SMO("BadSMO", -1, devices, 0), "Should throw on negative queue");
             
         assertThrows(IllegalArgumentException.class, () -> 
-            new SMO("BadSMO", 1, null, 0), "Should throw on null devices");
+            new SMO("BadSMO", 1, List.of(), 0), "Should throw on null devices");
             
         assertThrows(IllegalArgumentException.class, () -> 
             new SMO("BadSMO", 1, new ArrayList<>(), 0), "Should throw on empty devices");
