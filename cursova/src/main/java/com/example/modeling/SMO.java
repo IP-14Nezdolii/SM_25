@@ -201,8 +201,7 @@ public class SMO {
 
         ArrayList<Device> newBusy = new ArrayList<>(this.busyDevices.size());
 
-        while (this.busyDevices.isEmpty() == false) {
-            Device device = this.busyDevices.pop();
+        for (Device device : this.busyDevices) {
             device.run(time);
 
             switch (device.getStatus()) {
@@ -214,6 +213,8 @@ public class SMO {
                 case READY -> throw new IllegalStateException("Device is READY while being BUSY");
             }
         }
+
+        this.busyDevices.clear();
         this.busyDevices.addAll(newBusy);
 
         this.stats.record(time.doubleValue());
