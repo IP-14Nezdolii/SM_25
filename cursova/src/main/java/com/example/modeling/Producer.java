@@ -13,14 +13,10 @@ public class Producer extends SMO {
     ) {
         super(name, 0, devices, priority);
 
-        this.readyDevices.forEach((device) -> {
+        this.getReadyDevices().forEach((device) -> {
             device.process();
-
             this.stats.addRequest();
-            this.busyDevices.add(device);
         });
-
-        this.readyDevices.clear();
     }
 
     public Producer(
@@ -28,14 +24,7 @@ public class Producer extends SMO {
         Device device,
         int priority
     ) {
-        super(name, 0, List.of(device), priority);
-
-        device.process();
-
-        this.stats.addRequest();
-        this.busyDevices.add(device);
-
-        this.readyDevices.clear();
+        this(name, List.of(device), priority);
     }
 
     @Override
@@ -45,15 +34,14 @@ public class Producer extends SMO {
 
     @Override
     public void handleEvents() {
-        for (Device device : this.doneDevices) {
-            device.setStatus(Status.READY);
-            device.process();
-            this.busyDevices.add(device);
+        for (Device device : devices) {
+            if (device.getStatus() == Status.DONE) {
+                device.setStatus(Status.READY);
+                device.process();
 
-            this.stats.addRequest();
-            this.next.ifPresent((next) -> next.process());
+                this.stats.addRequest();
+                this.next.ifPresent((next) -> next.process());
+            }
         }
-
-        this.doneDevices.clear();
     }
 }
