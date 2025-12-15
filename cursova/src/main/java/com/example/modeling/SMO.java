@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.decimal4j.immutable.Decimal6f;
 
@@ -17,19 +18,16 @@ public class SMO {
     private final int maxQueueSize;
     private int queueSize;
 
-    protected ArrayDeque<Device> readyDevices = new ArrayDeque<>();
-    protected ArrayDeque<Device> busyDevices = new ArrayDeque<>();
-    protected ArrayDeque<Device> doneDevices = new ArrayDeque<>();
+    protected final ArrayDeque<Device> devices = new ArrayDeque<>();
 
     protected Optional<Connection> next = Optional.empty();
     protected boolean selfCheck = false;
 
     public SMO(
-        String name,
-        int maxQueueSize, 
-        List<Device> devices, 
-        int priority
-    ) {
+            String name,
+            int maxQueueSize,
+            List<Device> devices,
+            int priority) {
         this.name = name;
         this.maxQueueSize = maxQueueSize;
         this.queueSize = 0;
@@ -48,39 +46,29 @@ public class SMO {
             throw new IllegalArgumentException("Devices list must be not empty");
         }
 
-        for (Device device : devices) {
-            switch (device.getStatus()) {
-                case READY -> this.readyDevices.add(device);
-                case BUSY -> this.busyDevices.add(device);
-                case DONE -> this.doneDevices.add(device);
-            }
-        }
-
+        this.devices.addAll(devices);
         this.stats = new Stats(devices);
     }
 
     public SMO(
-        String name,
-        int maxQueueSize, 
-        Device device, 
-        int priority
-    ) {
+            String name,
+            int maxQueueSize,
+            Device device,
+            int priority) {
         this(name, maxQueueSize, List.of(device), priority);
     }
 
     public SMO(
-        String name,
-        Device device, 
-        int priority
-    ) {
+            String name,
+            Device device,
+            int priority) {
         this(name, 0, List.of(device), priority);
     }
 
     public SMO(
-        String name,
-        List<Device> devices, 
-        int priority
-    ) {
+            String name,
+            List<Device> devices,
+            int priority) {
         this(name, 0, devices, priority);
     }
 
@@ -98,11 +86,13 @@ public class SMO {
 
     public Status getStatus() {
         if (this.selfCheck) {
-            return Status.READY;
+        return Status.READY;
         }
 
-        if (this.readyDevices.isEmpty() == false) {
-            return Status.READY;
+        for (Device device : devices) {
+            if (device.getStatus() == Status.READY) {
+                return Status.READY;
+            }
         }
 
         if (this.maxQueueSize > this.queueSize) {
@@ -113,32 +103,40 @@ public class SMO {
     }
 
     public Decimal6f getLeftTime() {
-        return this.busyDevices.stream()
-            .map(Device::getLeftTime)
-            .min(Decimal6f::compareTo)
-            .orElse(Decimal6f.MAX_VALUE);
+        return this.devices.stream()
+                .map(Device::getLeftTime)
+                .min(Decimal6f::compareTo)
+                .orElseThrow();
     }
 
     public void process() {
         this.stats.addRequest();
 
-        // no ready devices, but there is space in the queue
-        if (this.maxQueueSize > this.queueSize && this.readyDevices.isEmpty()) {
+        var readyDevices = getReadyDevices();
+
+        if (readyDevices.isEmpty() && this.maxQueueSize > this.queueSize) {
             this.queueSize += 1;
-            // there are ready devices
-        } else if (this.readyDevices.isEmpty() == false) {
-            this.processReadyDevice();
+            return;
+        } else if (!readyDevices.isEmpty()) {
+            this.processDevice(readyDevices);
         } else {
             throw new IllegalStateException("SMO is busy");
         }
     }
 
-    private void processReadyDevice() {
-        Device device = this.readyDevices.pop();
+    protected List<Device> getReadyDevices() {
+        return this.devices.stream()
+                .filter(device -> device.getStatus() == Status.READY)
+                .collect(Collectors.toList());
+    }
+
+    private void processDevice(List<Device> readyDevices) {
+        Device device = readyDevices.removeFirst();
         device.process();
 
         switch (device.getStatus()) {
-            case BUSY -> this.busyDevices.add(device);
+            case BUSY -> {
+            }
             case DONE -> {
                 this.stats.addServed();
 
@@ -147,13 +145,9 @@ public class SMO {
                     if (next.getStatus() == Status.READY) {
                         next.process();
                         device.setStatus(Status.READY);
-                        this.readyDevices.add(device);
-                    } else {
-                        this.doneDevices.add(device);
                     }
                 }, () -> {
                     device.setStatus(Status.READY);
-                    this.readyDevices.add(device);
                 });
             }
             case READY -> throw new IllegalStateException("Device is still ready after processing");
@@ -161,33 +155,38 @@ public class SMO {
     }
 
     public void handleEvents() {
-        while (true) {
+        var readyDevices = this.getReadyDevices();
 
+        while (true) {
+            
             while (readyDevices.isEmpty() == false && this.queueSize > 0) {
                 this.queueSize -= 1;
-                this.processReadyDevice();
+                this.processDevice(readyDevices);
             }
 
             this.next.ifPresentOrElse((next) -> {
-
                 this.selfCheck = true;
 
-                while (this.doneDevices.isEmpty() == false && next.getStatus() == Status.READY) {
-                    Device device = this.doneDevices.pop();
-                    device.setStatus(Status.READY);
-                    this.readyDevices.add(device);
+                for (Device device : this.devices) {
+                    if (device.getStatus() == Status.DONE && next.getStatus() == Status.READY) {
+                        device.setStatus(Status.READY);
+                        readyDevices.add(device);
 
-                    next.process();
+                        next.process();
+                    }
                 }
 
                 this.selfCheck = false;
             }, () -> {
-                this.doneDevices.forEach(device -> device.setStatus(Status.READY));
-                this.readyDevices.addAll(this.doneDevices);
-                this.doneDevices.clear();
+                for (Device device : this.devices) { 
+                    if (device.getStatus() == Status.DONE) {
+                        device.setStatus(Status.READY);
+                        readyDevices.add(device);
+                    }
+                }
             });
 
-            if (this.readyDevices.isEmpty()) {
+            if (readyDevices.isEmpty()) {
                 break;
             } else if (this.queueSize == 0) {
                 break;
@@ -196,26 +195,19 @@ public class SMO {
     }
 
     public void run(Decimal6f time) {
-        this.doneDevices.forEach(device -> device.wait(time));
-        this.readyDevices.forEach(device -> device.wait(time));
+        for (Device device : this.devices) {
+            if (device.getStatus() != Status.BUSY) {
+                device.wait(time);
+            } else {
+                device.run(time);
 
-        ArrayList<Device> newBusy = new ArrayList<>(this.busyDevices.size());
-
-        for (Device device : this.busyDevices) {
-            device.run(time);
-
-            switch (device.getStatus()) {
-                case BUSY -> newBusy.add(device);
-                case DONE -> {
-                    this.stats.addServed();
-                    this.doneDevices.add(device);
+                switch (device.getStatus()) {
+                    case BUSY -> {}
+                    case DONE -> this.stats.addServed();
+                    case READY -> throw new IllegalStateException("Device is READY while being BUSY");
                 }
-                case READY -> throw new IllegalStateException("Device is READY while being BUSY");
             }
         }
-
-        this.busyDevices.clear();
-        this.busyDevices.addAll(newBusy);
 
         this.stats.record(time.doubleValue());
     }
@@ -230,8 +222,7 @@ public class SMO {
 
         Stats(List<Device> devices) {
             deviceStats.addAll(
-                devices.stream().map(Device::getStats).toList()
-            );
+                    devices.stream().map(Device::getStats).toList());
         }
 
         public ArrayList<Device.Stats> getDeviceStats() {
@@ -240,7 +231,7 @@ public class SMO {
 
         public void clear() {
             this.deviceStats.forEach(device -> device.clear());
-            
+
             this.totalWaitTime = 0;
             this.requests = 0;
             this.served = 0;
@@ -281,15 +272,15 @@ public class SMO {
         }
 
         public double getAverageWaitTime() {
-            return this.served != 0 
-                ? this.totalWaitTime / this.served 
-                : 0;
+            return this.served != 0
+                    ? this.totalWaitTime / this.served
+                    : 0;
         }
 
         public double getAverageQueueSize() {
-            return this.totalTime != 0 
-                ? this.totalWaitTime / this.totalTime 
-                : 0;
+            return this.totalTime != 0
+                    ? this.totalWaitTime / this.totalTime
+                    : 0;
         }
 
         @Override
@@ -301,27 +292,25 @@ public class SMO {
                 smoFormat = "%s:{requests=%d, served=%d}";
 
                 smoStatsString = String.format(
-                    smoFormat,
-                    this.getName(),
-                    this.requests,
-                    this.served
-                );
-                
+                        smoFormat,
+                        this.getName(),
+                        this.requests,
+                        this.served);
+
             } else {
                 smoFormat = "%s:{requests=%d, served=%d, avg_wait_time=%.4f, avg_queue_size=%.4f}";
-            
+
                 smoStatsString = String.format(
-                    smoFormat,
-                    this.getName(),
-                    this.requests,
-                    this.served,
-                    this.getAverageWaitTime(),
-                    this.getAverageQueueSize()
-                );
+                        smoFormat,
+                        this.getName(),
+                        this.requests,
+                        this.served,
+                        this.getAverageWaitTime(),
+                        this.getAverageQueueSize());
             }
 
             StringBuilder devicesStats = new StringBuilder();
-            
+
             devicesStats.append(" {");
             for (Device.Stats deviceStat : deviceStats) {
                 devicesStats.append("\n     ").append(deviceStat.toString());
