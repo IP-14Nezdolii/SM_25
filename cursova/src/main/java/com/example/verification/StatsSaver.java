@@ -59,24 +59,43 @@ public class StatsSaver {
 
         if (index == 0) {
             row.createCell(0).setCellValue("test_mask");
+
             row.createCell(1).setCellValue("prod_served");
+
             row.createCell(2).setCellValue("mean_q_size");
-            row.createCell(3).setCellValue("q_served");
-            row.createCell(4).setCellValue("m_loader_util");
-            row.createCell(5).setCellValue("m_truck_util");
-            row.createCell(6).setCellValue("productivity");
-            row.createCell(7).setCellValue("processing_time");
-            row.createCell(8).setCellValue("mean_wait_q");
+            row.createCell(3).setCellValue("mean_wait_q");
+            row.createCell(4).setCellValue("q_served");
+
+            row.createCell(5).setCellValue("m_loader_util");
+            row.createCell(6).setCellValue("mean_loader_q_size");
+            row.createCell(7).setCellValue("mean_loader_wait_q");
+
+            row.createCell(8).setCellValue("m_truck_util");
+            row.createCell(9).setCellValue("mean_truck_q_size");
+            row.createCell(10).setCellValue("mean_truck_wait_q");
+
+            row.createCell(11).setCellValue("productivity");
+            row.createCell(12).setCellValue("processing_time");
         } else {
             row.createCell(0).setCellValue(testMask);
+
             row.createCell(1).setCellValue(data.prod_served().get());
+
             row.createCell(2).setCellValue(data.mean_q_size().get());
-            row.createCell(3).setCellValue(data.q_served().get());
-            row.createCell(4).setCellValue(data.m_loader_util().get());
-            row.createCell(5).setCellValue(data.m_truck_util().get());
-            row.createCell(6).setCellValue(data.productivity().get());
-            row.createCell(7).setCellValue(data.processing_time().get());
-            row.createCell(8).setCellValue(data.mean_wait_q().get());
+            row.createCell(3).setCellValue(data.mean_wait_q().get());
+            row.createCell(4).setCellValue(data.q_served().get());
+
+            row.createCell(5).setCellValue(data.m_loader_util().get());
+            row.createCell(6).setCellValue(data.mean_loader_q_size().get());
+            row.createCell(7).setCellValue(data.mean_loader_wait_q().get());
+
+            row.createCell(8).setCellValue(data.m_truck_util().get());
+            row.createCell(9).setCellValue(data.mean_truck_q_size().get());
+            row.createCell(10).setCellValue(data.mean_truck_wait_q().get());
+
+            row.createCell(11).setCellValue(data.productivity().get());
+            row.createCell(12).setCellValue(data.processing_time().get());
+            
         }
     }
 }

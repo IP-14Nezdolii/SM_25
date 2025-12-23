@@ -7,14 +7,15 @@ public record ResultCalculator(
 
     Supplier<Double> mean_q_size,
     Supplier<Double> mean_wait_q,
-
-     Supplier<Integer> q_served,
+    Supplier<Long> q_served,
  
     Supplier<Double> m_loader_util,
     Supplier<Double> mean_loader_q_size,
     Supplier<Double> mean_loader_wait_q,
 
     Supplier<Double> m_truck_util,
+    Supplier<Double> mean_truck_q_size,
+    Supplier<Double> mean_truck_wait_q,
 
     Supplier<Double> productivity,
     Supplier<Double> processing_time) {
