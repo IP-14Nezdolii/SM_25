@@ -23,25 +23,24 @@ class ProducerTest {
 
     @Test
     void testInitialStatus() {
-        assertEquals(State.BUSY, producer.getState());
-        assertEquals(1, producer.getStats().getRequests());
+        assertEquals(State.BUSY,  this.producer.getState());
+        assertEquals(1,  this.producer.getStats().getRequests());
     }
 
     @Test
     void testRunSimulation() {
-        producer.recordStats(Decimal6f.valueOf(5.0));
-        producer.setCurrT(Decimal6f.valueOf(5.0));
+        this.producer.recordStats(Decimal6f.valueOf(5.0));
+        this.producer.setCurrT(Decimal6f.valueOf(5.0));
         
 
-        assertEquals(1, producer.getStats().getServed());
-        assertEquals(5.0, producer.getStats().getTotalTime());
+        assertEquals(1, this.producer.getStats().getServed());
+        assertEquals(5.0, this.producer.getStats().getTotalTime());
+        this.producer.processEvent();
 
-        producer.eventProcess();
-
-        producer.recordStats(Decimal6f.valueOf(5.0));
-        producer.setCurrT(Decimal6f.valueOf(10.0));
+        this.producer.recordStats(Decimal6f.valueOf(5.0));
+        this.producer.setCurrT(Decimal6f.valueOf(10.0));
         
-        assertEquals(2, producer.getStats().getServed());
-        assertEquals(10.0, producer.getStats().getTotalTime());
+        assertEquals(2, this.producer.getStats().getServed());
+        assertEquals(10.0, this.producer.getStats().getTotalTime());
     }
 }

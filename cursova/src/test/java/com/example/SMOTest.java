@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class SMOTest {
     private SingleChannelSMO smoWithQueue;
     private SingleChannelSMO smo;
+    private Decimal6f nextT = Decimal6f.ZERO;
     
     private final Supplier<Double> fixedTimeGenerator = () -> 5.0;
 
@@ -25,83 +26,94 @@ class SMOTest {
 
     @Test
     void testInitialStatus() {
-        assertEquals(State.READY, smoWithQueue.getState());
-        assertEquals(0, smoWithQueue.getStats().getRequests());
+        assertEquals(State.READY, this.smoWithQueue.getState());
+        assertEquals(0, this.smoWithQueue.getStats().getRequests());
 
-        assertEquals(State.READY, smo.getState());
-        assertEquals(0, smo.getStats().getRequests());
+        assertEquals(State.READY, this.smo.getState());
+        assertEquals(0, this.smo.getStats().getRequests());
     }
 
     @Test
     void testProcessWithReadyDevice() {
-        smoWithQueue.process();
-        smo.process();
+        this.smoWithQueue.process();
+        this.smo.process();
 
-        assertEquals(1, smoWithQueue.getStats().getRequests());
-        assertEquals(1, smo.getStats().getRequests());
+        assertEquals(1, this.smoWithQueue.getStats().getRequests());
+        assertEquals(1, this.smo.getStats().getRequests());
         
-        assertEquals(State.BUSY, smoWithQueue.getChannelState());
-        assertEquals(State.BUSY, smo.getChannelState());
+        assertEquals(State.BUSY, this.smoWithQueue.getChannelState());
+        assertEquals(State.BUSY, this.smo.getChannelState());
 
-        assertEquals(State.READY, smoWithQueue.getState());
-        assertEquals(State.BUSY, smo.getState());
+        assertEquals(State.READY, this.smoWithQueue.getState());
+        assertEquals(State.BUSY, this.smo.getState());
     }
 
     @Test
     void testProcessOverflow() {
-        smoWithQueue.process();
-        smoWithQueue.process();
-        smoWithQueue.process();
+        this.smoWithQueue.process();
+        this.smoWithQueue.process();
+        this.smoWithQueue.process();
 
-        smo.process();
+        this.smo.process();
 
-        assertEquals(3, smoWithQueue.getStats().getRequests());
-        assertEquals(1, smo.getStats().getRequests());
+        assertEquals(3, this.smoWithQueue.getStats().getRequests());
+        assertEquals(1, this.smo.getStats().getRequests());
 
         assertThrows(
             IllegalStateException.class, 
-            () -> smoWithQueue.process(), 
+            () -> this.smoWithQueue.process(), 
             "Should throw if SMO is BUSY (full)"
         );
         
         assertThrows(
             IllegalStateException.class, 
-            () -> smo.process(), 
+            () -> this.smo.process(), 
             "Should throw if SMO is BUSY (full)"
         );
     }
 
     @Test
     void testRunSimulation() {
-        smoWithQueue.process();
-        smo.process();
+        this.smoWithQueue.process();
+        this.smo.process();
 
-        smoWithQueue.recordStats(Decimal6f.valueOf(5.0));
-        smo.recordStats(Decimal6f.valueOf(5.0));
+        Decimal6f last = Decimal6f.ZERO;
+        this.nextT = this.smo.getNextT();
 
-        smoWithQueue.setCurrT(Decimal6f.valueOf(5.0));
-        smo.setCurrT(Decimal6f.valueOf(5.0));
+        this.smoWithQueue.recordStats(this.nextT.subtract(last));
+        this.smo.recordStats(this.nextT.subtract(last));
 
-        assertEquals(1, smoWithQueue.getStats().getServed());
-        assertEquals(5.0, smoWithQueue.getStats().getTotalTime());
+        last = this.nextT;
 
-        assertEquals(1, smo.getStats().getServed());
-        assertEquals(5.0, smo.getStats().getTotalTime());
+        this.smoWithQueue.setCurrT(this.nextT);
+        this.smo.setCurrT(this.nextT);
 
-        smoWithQueue.eventProcess();
-        smo.eventProcess();
+        this.smoWithQueue.processEvent();
+        this.smo.processEvent();
 
-        smoWithQueue.recordStats(Decimal6f.valueOf(5.0));
-        smo.recordStats(Decimal6f.valueOf(5.0));
+        assertEquals(1, this.smoWithQueue.getStats().getServed());
+        assertEquals(5.0, this.smoWithQueue.getStats().getTotalTime());
 
-        smoWithQueue.setCurrT(Decimal6f.valueOf(10.0));
-        smo.setCurrT(Decimal6f.valueOf(10.0));
+        assertEquals(1, this.smo.getStats().getServed());
+        assertEquals(5.0, this.smo.getStats().getTotalTime());
 
-        assertEquals(1, smoWithQueue.getStats().getServed());
-        assertEquals(10.0, smoWithQueue.getStats().getTotalTime());
 
-        assertEquals(1, smo.getStats().getServed());
-        assertEquals(10.0, smo.getStats().getTotalTime());
+        this.smoWithQueue.process();
+        this.smo.process();
+
+        this.nextT = this.smo.getNextT();
+
+        this.smoWithQueue.recordStats(this.nextT.subtract(last));
+        this.smo.recordStats(this.nextT.subtract(last));
+
+        this.smoWithQueue.setCurrT(this.nextT);
+        this.smo.setCurrT(this.nextT);
+
+        assertEquals(2, this.smoWithQueue.getStats().getServed());
+        assertEquals(10.0, this.smoWithQueue.getStats().getTotalTime());
+
+        assertEquals(2, this.smo.getStats().getServed());
+        assertEquals(10.0, this.smo.getStats().getTotalTime());
     }
 
     @Test
@@ -120,16 +132,28 @@ class SMOTest {
         smo1.process();
         smo1.process();
 
-        smo2.eventProcess();
-        smo1.eventProcess();
+        smo1.setCurrT(Decimal6f.ZERO);
+        smo2.setCurrT(Decimal6f.ZERO);
+
+        smo2.processEvent();
+        smo1.processEvent();
 
         assertEquals(1, smo2.getStats().getRequests());
 
+        smo1.setCurrT(Decimal6f.ZERO);
+        smo2.setCurrT(Decimal6f.ZERO);
+
+        smo2.processEvent();
+        smo1.processEvent();
+
+        assertEquals(2, smo1.getStats().getServed());
+        assertEquals(1, smo2.getStats().getRequests());
+        
         smo1.setCurrT(Decimal6f.valueOf(5.0));  
         smo2.setCurrT(Decimal6f.valueOf(5.0)); 
 
-        smo2.eventProcess();
-        smo1.eventProcess();
+        smo2.processEvent();
+        smo1.processEvent();
 
         assertEquals(2, smo2.getStats().getRequests());
     }

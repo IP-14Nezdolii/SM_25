@@ -51,7 +51,7 @@ public class Model {
 
             // process events scheduled at the current simulation time
             for (SingleChannelSMO smo : elems) {
-                smo.eventProcess();
+                smo.processEvent();
             }
         }
     }

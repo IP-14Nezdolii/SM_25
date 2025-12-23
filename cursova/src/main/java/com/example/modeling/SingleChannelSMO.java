@@ -45,10 +45,7 @@ public class SingleChannelSMO {
     }
 
     public Decimal6f getNextT() {
-        return switch (this.channelState) {
-            case State.BUSY -> this.nextT;
-            case State.DONE, State.READY -> Decimal6f.MAX_VALUE;
-        };
+        return this.nextT;
     }
 
     public void setCurrT(Decimal6f currT) {
@@ -103,79 +100,50 @@ public class SingleChannelSMO {
      * if this.channelStatus is not READY, enqueue
      */
     public void process() {
-        this.stats.addRequest();
-
         if (this.channelState.isReady()) {
-            this.processIfReady();
+            this.nextT = currT.add(Decimal6f.valueOf(this.rand.get()));
+            this.channelState = State.BUSY;
         } else {
             if (this.maxQueueSize > this.queueSize) {
                 this.queueSize += 1;
             } else {
-                throw new IllegalStateException("SMO is busy");
+                throw new IllegalStateException("SMO is not READY");
             }
         }
+
+        this.stats.addRequest();
     }
 
-    protected void processIfReady() {
+    public void processEvent() {
         switch (this.channelState) {
-            case State.READY -> {
-                var t = Decimal6f.valueOf(this.rand.get());
+            case BUSY: return;
+            case DONE:
+                if (this.next.isPresent()) {
+                    var next = this.next.get();
 
-                if (t.isZero()) {
-                    this.setDoneStatus();
-                    this.stats.addServed();
-                    
-                    this.eventProcess();
-                    return;
-                }
+                    // if the object is calling push() on itself 
+                    // getState() returns READY
+                    this.selfCheck = true;
 
-                this.nextT = currT.add(t);
-                if (this.nextT.isGreaterThan(this.currT)) {
-                    this.channelState = State.BUSY;
-                } else {
-                    this.setDoneStatus();
-                    this.stats.addServed();
-                }
-            }
-            case State.DONE, State.BUSY -> throw new IllegalStateException("Device is not READY");
-        }
-    }
-
-    public void eventProcess() {
-        // if delay is constantly zero, 
-        // try to process as many queued requests as possible
-        loop: while (true) {
-            switch (this.channelState) {
-                case BUSY:
-                    break loop;
-                case DONE:
-                    if (this.next.isPresent()) {
-                        var next = this.next.get();
-
-                        // if the object is calling process() on itself 
-                        // getState() returns READY
-                        this.selfCheck = true;
-
-                        if (next.getState().isReady()) {
-                            this.nextT = Decimal6f.MAX_VALUE;
-                            this.channelState = State.READY;
-
-                            next.push();
-                        } else {
-                            break loop;
-                        }
-                    } else {
+                    if (next.getState().isReady()) {
                         this.nextT = Decimal6f.MAX_VALUE;
                         this.channelState = State.READY;
-                    }
-                case READY:
-                    if (this.queueSize > 0) {
-                        this.queueSize -= 1;
-                        this.processIfReady();
+
+                        next.push();
                     } else {
-                        break loop;
+                        break;
                     }
-            }
+                } else {
+                    this.nextT = Decimal6f.MAX_VALUE;
+                    this.channelState = State.READY;
+                }
+            case READY:
+                if (this.queueSize > 0) {
+                    this.queueSize -= 1;
+
+                    this.nextT = currT.add(Decimal6f.valueOf(this.rand.get()));
+                    this.channelState = State.BUSY;
+                }
         }
 
         this.selfCheck = false;

@@ -96,8 +96,8 @@ class ConnectionTest {
         source.setCurrT(t);
         sink.setCurrT(t);
 
-        sink.eventProcess();
-        source.eventProcess();
+        sink.processEvent();
+        source.processEvent();
 
         assertEquals(State.READY, source.getState());
         assertEquals(1, sink.getStats().getRequests());
@@ -124,9 +124,9 @@ class ConnectionTest {
         targetA.setCurrT(t);
         targetB.setCurrT(t);
 
-        targetA.eventProcess();
-        targetB.eventProcess();
-        source.eventProcess();
+        targetA.processEvent();
+        targetB.processEvent();
+        source.processEvent();
 
         assertEquals(1, source.getStats().getRequests());
         assertEquals(0, targetA.getStats().getRequests());

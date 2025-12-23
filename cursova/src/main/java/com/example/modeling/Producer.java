@@ -18,7 +18,7 @@ public class Producer extends SingleChannelSMO {
     }
 
     @Override
-    public void eventProcess() {
+    public void processEvent() {
         switch (this.channelState) {
             case BUSY:
                 break;
