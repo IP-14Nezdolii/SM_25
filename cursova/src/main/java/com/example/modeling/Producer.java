@@ -1,30 +1,15 @@
 package com.example.modeling;
+import java.util.function.Supplier;
 
-import java.util.List;
+import org.decimal4j.immutable.Decimal6f;
 
-import com.example.modeling.utils.Status;
+import com.example.modeling.utils.State;
 
-public class Producer extends SMO {
+public class Producer extends SingleChannelSMO {
 
-    public Producer(
-        String name,
-        List<Device> devices,
-        int priority
-    ) {
-        super(name, 0, devices, priority);
-
-        this.getReadyDevices().forEach((device) -> {
-            device.process();
-            this.stats.addRequest();
-        });
-    }
-
-    public Producer(
-        String name,
-        Device device,
-        int priority
-    ) {
-        this(name, List.of(device), priority);
+    public Producer(String name, Supplier<Double> rand, int eventProcessPriority) {
+        super(name, 0, rand, eventProcessPriority);
+        super.process();
     }
 
     @Override
@@ -33,15 +18,16 @@ public class Producer extends SMO {
     }
 
     @Override
-    public void handleEvents() {
-        for (Device device : devices) {
-            if (device.getStatus() == Status.DONE) {
-                device.setStatus(Status.READY);
-                device.process();
-
-                this.stats.addRequest();
-                this.next.ifPresent((next) -> next.process());
-            }
+    public void eventProcess() {
+        switch (this.channelState) {
+            case BUSY:
+                break;
+            case DONE:
+                this.next.ifPresent((next) -> next.push());
+                this.nextT = Decimal6f.MAX_VALUE;
+                this.channelState = State.READY;
+            case READY:
+                super.process();
         }
     }
 }

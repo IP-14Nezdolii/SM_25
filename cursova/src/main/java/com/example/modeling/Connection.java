@@ -6,14 +6,16 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 import com.example.modeling.utils.Pair;
-import com.example.modeling.utils.Status;
+import com.example.modeling.utils.State;
 
 public class Connection {
     private final Random rand = new Random();
-    private final ArrayList<Pair<SMO, Supplier<Boolean>>> next = new ArrayList<>();
+    private final ArrayList<Pair<SingleChannelSMO, Supplier<Boolean>>> next = new ArrayList<>();
 
     private final int groupSize;
     private int size = 0;
+
+    private int outputCount = 0;
 
     public Connection(int groupSize) {
         if (groupSize <= 0) {
@@ -24,27 +26,38 @@ public class Connection {
     }
 
     public Connection() {
-        this.groupSize = 1;
+        this(1);
     }
 
-    public void process() {
-        List<SMO> lst = this.next.stream()
-            .filter(elem -> elem.get0().getStatus() == Status.READY && elem.get1().get())
+    public void push() {
+        if (this.next.isEmpty()) {
+            this.size++;
+            if (this.groupSize == this.size) {
+                this.size = 0;
+                this.outputCount++;
+            }
+            return;
+        }
+
+        List<SingleChannelSMO> lst = this.next.stream()
+            .filter(elem -> elem.get0().getState().isReady() && elem.get1().get())
             .map(elem -> elem.get0())
             .toList(); 
 
         if (lst.isEmpty()) {
-            throw new IllegalStateException("No SMO is ready to process the task");
+            throw new IllegalStateException("No available SMO to push the item");
         }
 
         this.size++;
         if (this.groupSize == this.size) {
             this.size = 0;
             lst.get(rand.nextInt(lst.size())).process();
+
+            this.outputCount++;
         }
     }
 
-    public void addNext(SMO smo) {
+    public void addNext(SingleChannelSMO smo) {
         if (smo == null) {
             throw new IllegalArgumentException("SMO must be not null");
         }
@@ -52,7 +65,7 @@ public class Connection {
         this.next.add(Pair.createPair(smo, () -> true));
     }
 
-    public void addNext(SMO smo, Supplier<Boolean> condition) {
+    public void addNext(SingleChannelSMO smo, Supplier<Boolean> condition) {
         if (smo == null) {
             throw new IllegalArgumentException("SMO must be not null");
         }
@@ -60,10 +73,16 @@ public class Connection {
         this.next.add(Pair.createPair(smo, condition));
     }
 
-    public Status getStatus() {
-        return this.next.stream()
-                .anyMatch(elem -> elem.get0().getStatus() == Status.READY && elem.get1().get())
-                        ? Status.READY
-                        : Status.BUSY;
+    public State getState() {
+        return this.next.isEmpty()
+            ? State.READY
+            : this.next.stream()
+                .anyMatch(elem -> elem.get0().getState().isReady() && elem.get1().get())
+                        ? State.READY
+                        : State.BUSY;
+    }
+
+    public int getOutputCount() {
+        return this.outputCount;
     }
 }

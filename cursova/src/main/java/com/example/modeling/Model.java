@@ -7,49 +7,62 @@ import java.util.List;
 import org.decimal4j.immutable.Decimal6f;
 
 public class Model {
-    private final ArrayList<SMO> elems;
+    private final ArrayList<SingleChannelSMO> elems;
+    private Decimal6f currT = Decimal6f.ZERO;
 
-    public Model(ArrayList<SMO> elems) {
+    public Model(ArrayList<SingleChannelSMO> elems) {
         if (elems.isEmpty()) {
             throw new IllegalArgumentException("Model elements list must be not empty");
         }
 
-        elems.sort(Comparator.comparingInt(SMO::getEventPriority).reversed());
+        // sort elements by event priority in descending order
+        elems.sort(Comparator.comparingInt(SingleChannelSMO::getEventProcessPriority).reversed());
         this.elems = elems;
     }
 
-    public void run(double runTime) {
-        Decimal6f leftTimeSim = Decimal6f.valueOf(runTime);
+    public void simulate(double runTime) {
+        // calculate absolute end time of the simulation (current time + run time) 
+        // considering possible pre-run
+        Decimal6f timeModeling = Decimal6f.valueOf(runTime).add(currT);
 
-        while (leftTimeSim.isEqualTo(Decimal6f.ZERO)) {
-            Decimal6f minLeftTime = elems.stream()
-                    .map(SMO::getLeftTime)
+        while (timeModeling.isGreaterThan(this.currT)) {
+            
+            // next event time
+            this.currT = elems.stream()
+                    .map(SingleChannelSMO::getNextT)
                     .min(Decimal6f::compareTo)
                     .orElseThrow();
 
-            Decimal6f step = minLeftTime.compareTo(leftTimeSim) < 0
-                    ? minLeftTime
-                    : leftTimeSim;
+            // do not advance simulation time beyond the modeling end time
+            this.currT = currT.compareTo(timeModeling) < 0
+                    ? currT
+                    : timeModeling;
 
-            for (SMO smo : elems) {
-                smo.run(step);
+            // accumulate statistics
+            Decimal6f deltaT = this.currT.subtract(elems.get(0).currT);
+            for (SingleChannelSMO smo : elems) {
+                smo.recordStats(deltaT);
             }
 
-            for (SMO smo : elems) {
-                smo.handleEvents();
+            // update current simulation time 
+            for (SingleChannelSMO smo : elems) {
+                smo.setCurrT(this.currT);
             }
 
-            leftTimeSim = leftTimeSim.subtract(step);
+            // process events scheduled at the current simulation time
+            for (SingleChannelSMO smo : elems) {
+                smo.eventProcess();
+            }
         }
     }
 
     public void clearStats() {
-        for (SMO smo : elems) {
+        for (SingleChannelSMO smo : elems) 
             smo.getStats().clear();
-        }
     }
 
-    public List<SMO.Stats> getStats() {
-        return this.elems.stream().map(SMO::getStats).toList().reversed();
+    // returns statistics in reverse order of event priority
+    public List<SingleChannelSMO.Stats> getStats() {
+        return this.elems.stream().map(SingleChannelSMO::getStats).toList().reversed();
     }
 }
