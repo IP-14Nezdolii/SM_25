@@ -16,7 +16,7 @@ public class SingleChannelSMO {
     private final int maxQueueSize;
     private int queueSize;
 
-    final Supplier<Double> rand;
+    final Supplier<Double> delay;
     Decimal6f currT = Decimal6f.ZERO;
     Decimal6f nextT = Decimal6f.MAX_VALUE;
 
@@ -36,12 +36,12 @@ public class SingleChannelSMO {
             throw new IllegalArgumentException("Max queue size must be non-negative");
         }
 
-        this.rand = rand;
+        this.delay = rand;
         this.stats = new Stats();
     }
 
-    public SingleChannelSMO(String name, Supplier<Double> rand, int eventProcessPriority) {
-        this(name, 0, rand, eventProcessPriority);
+    public SingleChannelSMO(String name, Supplier<Double> delay, int eventProcessPriority) {
+        this(name, 0, delay, eventProcessPriority);
     }
 
     public Decimal6f getNextT() {
@@ -101,7 +101,7 @@ public class SingleChannelSMO {
      */
     public void process() {
         if (this.channelState.isReady()) {
-            this.nextT = currT.add(Decimal6f.valueOf(this.rand.get()));
+            this.nextT = currT.add(Decimal6f.valueOf(this.delay.get()));
             this.channelState = State.BUSY;
         } else {
             if (this.maxQueueSize > this.queueSize) {
@@ -141,7 +141,7 @@ public class SingleChannelSMO {
                 if (this.queueSize > 0) {
                     this.queueSize -= 1;
 
-                    this.nextT = currT.add(Decimal6f.valueOf(this.rand.get()));
+                    this.nextT = currT.add(Decimal6f.valueOf(this.delay.get()));
                     this.channelState = State.BUSY;
                 }
         }
@@ -176,7 +176,7 @@ public class SingleChannelSMO {
         private double blockTime = 0;
 
         private double waitTime = 0;
-        private double totalTime = 0;
+        private double totalSimTime = 0;
 
         private long requests = 0;
         private long served = 0;
@@ -186,7 +186,7 @@ public class SingleChannelSMO {
             this.blockTime = 0;
 
             this.waitTime = 0;
-            this.totalTime = 0;
+            this.totalSimTime = 0;
 
             this.requests = 0;
             this.served = 0;
@@ -198,22 +198,26 @@ public class SingleChannelSMO {
             double t = deltaT.doubleValue();
 
             this.busyTime += t;
-            this.totalTime += t;
+            this.totalSimTime += t;
         }
 
         public void addDeviceBlockTime(Decimal6f deltaT) {  
             double t = deltaT.doubleValue();
 
             this.blockTime += t;
-            this.totalTime += t;
+            this.totalSimTime += t;
         }
 
         public void addDeviceWaitTime(Decimal6f deltaT) {
-            this.totalTime += deltaT.doubleValue();
+            this.totalSimTime += deltaT.doubleValue();
         }
 
         public void addServed() {
             this.served += 1;
+        }
+
+        public long getServed() {
+            return this.served;
         }
 
         public double getBlockTime() {
@@ -224,12 +228,8 @@ public class SingleChannelSMO {
             return this.busyTime;
         }
 
-        public double getTotalTime() {
-            return this.totalTime;
-        }
-
-        public long getServed() {
-            return this.served;
+        public double getTotalSimTime() {
+            return this.totalSimTime;
         }
 
         // Queue stats
@@ -245,8 +245,8 @@ public class SingleChannelSMO {
         }
 
         public double getAverageQueueSize() {
-            return this.totalTime != 0
-                    ? this.waitTime / this.totalTime
+            return this.totalSimTime != 0
+                    ? this.waitTime / this.totalSimTime
                     : 0;
         }
 
@@ -281,7 +281,7 @@ public class SingleChannelSMO {
             format.append("Device:{busy_time=%.3f, block_time=%.3f, total_time=%.3f}}");
             args.add(this.busyTime);
             args.add(this.blockTime);
-            args.add(this.totalTime);
+            args.add(this.totalSimTime);
 
             return String.format(format.toString(), args.toArray());
         }

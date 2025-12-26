@@ -92,10 +92,10 @@ class SMOTest {
         this.smo.processEvent();
 
         assertEquals(1, this.smoWithQueue.getStats().getServed());
-        assertEquals(5.0, this.smoWithQueue.getStats().getTotalTime());
+        assertEquals(5.0, this.smoWithQueue.getStats().getTotalSimTime());
 
         assertEquals(1, this.smo.getStats().getServed());
-        assertEquals(5.0, this.smo.getStats().getTotalTime());
+        assertEquals(5.0, this.smo.getStats().getTotalSimTime());
 
 
         this.smoWithQueue.process();
@@ -110,10 +110,10 @@ class SMOTest {
         this.smo.setCurrT(this.nextT);
 
         assertEquals(2, this.smoWithQueue.getStats().getServed());
-        assertEquals(10.0, this.smoWithQueue.getStats().getTotalTime());
+        assertEquals(10.0, this.smoWithQueue.getStats().getTotalSimTime());
 
         assertEquals(2, this.smo.getStats().getServed());
-        assertEquals(10.0, this.smo.getStats().getTotalTime());
+        assertEquals(10.0, this.smo.getStats().getTotalSimTime());
     }
 
     @Test

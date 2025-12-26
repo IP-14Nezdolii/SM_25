@@ -11,7 +11,7 @@ import com.example.modeling.SingleChannelSMO;
 import com.example.modeling.utils.FunRand;
 import com.example.modeling.utils.Pair;
 
-public class ModelInitProducer {
+public class BaseModelInitProducer {
 
     public static Supplier<Pair<Model, ResultCalculator>> getModelInit(Supplier<Double>[] params) {
         return () -> {
@@ -210,29 +210,29 @@ public class ModelInitProducer {
 
             Supplier<Long> prod_served = () -> producer.getStats().getServed();
 
-            Supplier<Double> mean_q_size = () -> smoSt.getAverageQueueSize() + smoSt.getBlockTime() / smoSt.getTotalTime();
+            Supplier<Double> mean_q_size = () -> smoSt.getAverageQueueSize() + smoSt.getBlockTime() / smoSt.getTotalSimTime();
             Supplier<Double> mean_wait_q = () -> (smoSt.getWaitTime() + smoSt.getBlockTime()) / smoSt.getServed();
             Supplier<Long> q_served = () -> smoWithQueue.getStats().getServed();
 
             Supplier<Double> m_loader_util = () -> (
                 loader1St.getBusyTime() + loader2St.getBusyTime() + 
                 rest1St.getBusyTime() + rest2St.getBusyTime()) /
-                2 / loader1St.getTotalTime();
+                2 / loader1St.getTotalSimTime();
             Supplier<Double> mean_loader_q_size = () -> m_loader_util.get() * 2;
             Supplier<Double> mean_loader_wait_q = () -> mean_loader_q_size.get() * 
-                loader1St.getTotalTime() / 
+                loader1St.getTotalSimTime() / 
                 (loader1St.getServed() + loader2St.getServed());
 
             Supplier<Double> m_truck_util = () -> ((truck1St.getBusyTime() + truck2St.getBusyTime() + truck3St.getBusyTime() + truck4St.getBusyTime()) +
                         (rest11St.getBusyTime() + rest12St.getBusyTime() + rest13St.getBusyTime() + rest14St.getBusyTime()) +
                         (loader1St.getBusyTime() + loader2St.getBusyTime())) /
-                        4 / (truck1St.getTotalTime());
+                        4 / (truck1St.getTotalSimTime());
             Supplier<Double> mean_truck_q_size = () -> (1.0 - m_truck_util.get()) * 4;
             Supplier<Double> mean_truck_wait_q = () -> mean_truck_q_size.get() * 
-                loader1St.getTotalTime() / 
+                loader1St.getTotalSimTime() / 
                 connection4.getOutputCount();
 
-            Supplier<Double> productivity = () -> (double) connection4.getOutputCount() / truck1St.getTotalTime();
+            Supplier<Double> productivity = () -> (double) connection4.getOutputCount() / truck1St.getTotalSimTime();
             Supplier<Double> processing_time = () -> (
                 smoSt.getWaitTime() + smoSt.getBlockTime() +
                 loader1St.getBusyTime() +

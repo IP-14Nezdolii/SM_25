@@ -72,7 +72,7 @@ public class Tester {
         for (int i = 0; i < lst.size(); i++) {
 
             Supplier<Pair<Model, ResultCalculator>> init = 
-                ModelInitProducer.getModelInit(lst.get(i));
+                BaseModelInitProducer.getModelInit(lst.get(i));
 
             for (int j = 0; j < N_SAMPLES; j++) {
                 var model = init.get();
@@ -92,7 +92,7 @@ public class Tester {
         for (Integer preRunTime : preRunTimes) {
 
             Supplier<Pair<Model, ResultCalculator>> init = 
-                ModelInitProducer.getModelInit(defaultParams);
+                BaseModelInitProducer.getModelInit(defaultParams);
 
             for (int j = 0; j < N_SAMPLES; j++) {
                 var model = init.get();
@@ -112,7 +112,7 @@ public class Tester {
         var statsSaver = new StatsSaver();
 
         Supplier<Pair<Model, ResultCalculator>> init = 
-            ModelInitProducer.getModelInit(defaultParams);
+            BaseModelInitProducer.getModelInit(defaultParams);
 
         for (int j = 0; j < 10_000; j++) {
             var model = init.get();

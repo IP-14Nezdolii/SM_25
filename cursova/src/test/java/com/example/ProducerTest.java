@@ -34,13 +34,13 @@ class ProducerTest {
         
 
         assertEquals(1, this.producer.getStats().getServed());
-        assertEquals(5.0, this.producer.getStats().getTotalTime());
+        assertEquals(5.0, this.producer.getStats().getTotalSimTime());
         this.producer.processEvent();
 
         this.producer.recordStats(Decimal6f.valueOf(5.0));
         this.producer.setCurrT(Decimal6f.valueOf(10.0));
         
         assertEquals(2, this.producer.getStats().getServed());
-        assertEquals(10.0, this.producer.getStats().getTotalTime());
+        assertEquals(10.0, this.producer.getStats().getTotalSimTime());
     }
 }

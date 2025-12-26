@@ -302,13 +302,13 @@ public class ModelTest {
 
 		double mean_loader_utilization = 
 			(loader1St.getBusyTime() + loader2St.getBusyTime() + rest1St.getBusyTime() + rest2St.getBusyTime()) / 
-			2 / loader1St.getTotalTime();
+			2 / loader1St.getTotalSimTime();
 
 		double mean_truck_utilization = 
 			((truck1St.getBusyTime() + truck2St.getBusyTime() + truck3St.getBusyTime() + truck4St.getBusyTime()) + 
 			(rest11St.getBusyTime() + rest12St.getBusyTime() + rest13St.getBusyTime() + rest14St.getBusyTime()) +
 			(loader1St.getBusyTime() + loader2St.getBusyTime())) / 
-			4 / (truck1St.getTotalTime());
+			4 / (truck1St.getTotalSimTime());
 
 		System.out.println(mean_loader_utilization);
 		System.out.println(mean_truck_utilization);
