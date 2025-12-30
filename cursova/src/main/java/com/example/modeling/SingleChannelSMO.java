@@ -9,12 +9,12 @@ import org.decimal4j.immutable.Decimal6f;
 import com.example.modeling.utils.State;
 
 public class SingleChannelSMO {
-    protected final Stats stats;
+    protected final Stats stats = new Stats();
     private final String name;
 
     private final int eventProcessPriority;
     private final int maxQueueSize;
-    private int queueSize;
+    private int queueSize = 0;
 
     final Supplier<Double> delay;
     Decimal6f currT = Decimal6f.ZERO;
@@ -26,18 +26,14 @@ public class SingleChannelSMO {
     protected boolean selfCheck = false;
 
     public SingleChannelSMO(String name, int maxQueueSize, Supplier<Double> rand, int eventProcessPriority) {
-        this.name = name;
-        this.maxQueueSize = maxQueueSize;
-        this.queueSize = 0;
-
-        this.eventProcessPriority = eventProcessPriority;
-
         if (maxQueueSize < 0) {
             throw new IllegalArgumentException("Max queue size must be non-negative");
         }
 
+        this.name = name;
+        this.maxQueueSize = maxQueueSize;
+        this.eventProcessPriority = eventProcessPriority;
         this.delay = rand;
-        this.stats = new Stats();
     }
 
     public SingleChannelSMO(String name, Supplier<Double> delay, int eventProcessPriority) {
@@ -151,7 +147,7 @@ public class SingleChannelSMO {
 
     public void recordStats(Decimal6f deltaT) {
         switch (this.channelState) {
-            case READY -> this.stats.addDeviceWaitTime(deltaT);
+            case READY -> this.stats.addTotalTime(deltaT);
             case DONE -> this.stats.addDeviceBlockTime(deltaT); 
             case BUSY -> this.stats.addDeviceBusyTime(deltaT);
         }
@@ -174,9 +170,9 @@ public class SingleChannelSMO {
     public class Stats {
         private double busyTime = 0;
         private double blockTime = 0;
-
-        private double waitTime = 0;
         private double totalSimTime = 0;
+
+        private double waitQTime = 0;
 
         private long requests = 0;
         private long served = 0;
@@ -184,10 +180,10 @@ public class SingleChannelSMO {
         public void clear() {
             this.busyTime = 0;
             this.blockTime = 0;
-
-            this.waitTime = 0;
             this.totalSimTime = 0;
 
+            this.waitQTime = 0;
+            
             this.requests = 0;
             this.served = 0;
         }
@@ -208,7 +204,7 @@ public class SingleChannelSMO {
             this.totalSimTime += t;
         }
 
-        public void addDeviceWaitTime(Decimal6f deltaT) {
+        public void addTotalTime(Decimal6f deltaT) {
             this.totalSimTime += deltaT.doubleValue();
         }
 
@@ -235,18 +231,18 @@ public class SingleChannelSMO {
         // Queue stats
 
         public void recordQSize(Decimal6f deltaT) {
-            this.waitTime += deltaT.doubleValue() * SingleChannelSMO.this.queueSize;
+            this.waitQTime += deltaT.doubleValue() * SingleChannelSMO.this.queueSize;
         }
 
         public double getAverageWaitTime() {
             return this.served != 0
-                    ? this.waitTime / this.served
+                    ? this.waitQTime / this.served
                     : 0;
         }
 
         public double getAverageQueueSize() {
             return this.totalSimTime != 0
-                    ? this.waitTime / this.totalSimTime
+                    ? this.waitQTime / this.totalSimTime
                     : 0;
         }
 
@@ -258,8 +254,8 @@ public class SingleChannelSMO {
             this.requests += 1;
         }
 
-        public double getWaitTime() {
-            return this.waitTime;
+        public double getWaitQTime() {
+            return this.waitQTime;
         }
 
         @Override

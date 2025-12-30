@@ -211,7 +211,7 @@ public class BaseModelInitProducer {
             Supplier<Long> prod_served = () -> producer.getStats().getServed();
 
             Supplier<Double> mean_q_size = () -> smoSt.getAverageQueueSize() + smoSt.getBlockTime() / smoSt.getTotalSimTime();
-            Supplier<Double> mean_wait_q = () -> (smoSt.getWaitTime() + smoSt.getBlockTime()) / smoSt.getServed();
+            Supplier<Double> mean_wait_q = () -> (smoSt.getWaitQTime() + smoSt.getBlockTime()) / smoSt.getServed();
             Supplier<Long> q_served = () -> smoWithQueue.getStats().getServed();
 
             Supplier<Double> m_loader_util = () -> (
@@ -234,7 +234,7 @@ public class BaseModelInitProducer {
 
             Supplier<Double> productivity = () -> (double) connection4.getOutputCount() / truck1St.getTotalSimTime();
             Supplier<Double> processing_time = () -> (
-                smoSt.getWaitTime() + smoSt.getBlockTime() +
+                smoSt.getWaitQTime() + smoSt.getBlockTime() +
                 loader1St.getBusyTime() +
                 loader2St.getBusyTime() +
                 truck1St.getBusyTime() +

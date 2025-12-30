@@ -57,12 +57,16 @@ public class Model {
     }
 
     public void clearStats() {
-        for (SingleChannelSMO smo : elems) 
+        for (SingleChannelSMO smo : elems) {
             smo.getStats().clear();
+        } 
     }
 
     // returns statistics in reverse order of event priority
     public List<SingleChannelSMO.Stats> getStats() {
-        return this.elems.stream().map(SingleChannelSMO::getStats).toList().reversed();
+        return this.elems.stream()
+            .map(SingleChannelSMO::getStats)
+            .toList()
+            .reversed();
     }
 }
