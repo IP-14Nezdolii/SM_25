@@ -1,6 +1,6 @@
 package com.example.modeling.utils;
 
-public enum State {
+public enum Status {
     BUSY,
     DONE,
     READY;

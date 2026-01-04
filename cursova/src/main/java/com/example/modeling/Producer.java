@@ -3,7 +3,7 @@ import java.util.function.Supplier;
 
 import org.decimal4j.immutable.Decimal6f;
 
-import com.example.modeling.utils.State;
+import com.example.modeling.utils.Status;
 
 public class Producer extends SingleChannelSMO {
 
@@ -19,13 +19,13 @@ public class Producer extends SingleChannelSMO {
 
     @Override
     public void processEvent() {
-        switch (this.channelState) {
+        switch (this.channelStatus) {
             case BUSY:
                 break;
             case DONE:
                 this.next.ifPresent((next) -> next.push());
                 this.nextT = Decimal6f.MAX_VALUE;
-                this.channelState = State.READY;
+                this.channelStatus = Status.READY;
             case READY:
                 super.process();
         }

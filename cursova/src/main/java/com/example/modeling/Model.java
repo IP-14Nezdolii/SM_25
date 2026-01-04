@@ -23,42 +23,39 @@ public class Model {
     public void simulate(double runTime) {
         // calculate absolute end time of the simulation (current time + run time) 
         // considering possible pre-run
-        Decimal6f timeModeling = Decimal6f.valueOf(runTime).add(currT);
+        Decimal6f modelingTime = Decimal6f.valueOf(runTime).add(currT);
 
-        while (timeModeling.isGreaterThan(this.currT)) {
+        while (modelingTime.isGreaterThan(this.currT)) {
             
             // next event time
+            // do not advance simulation time beyond the modeling end time
             this.currT = elems.stream()
                     .map(SingleChannelSMO::getNextT)
                     .min(Decimal6f::compareTo)
-                    .orElseThrow();
-
-            // do not advance simulation time beyond the modeling end time
-            this.currT = currT.compareTo(timeModeling) < 0
-                    ? currT
-                    : timeModeling;
+                    .orElseThrow()
+                    .min(modelingTime);
 
             // accumulate statistics
-            Decimal6f deltaT = this.currT.subtract(elems.get(0).currT);
-            for (SingleChannelSMO smo : elems) {
-                smo.recordStats(deltaT);
+            Decimal6f deltaT = this.currT.subtract(elems.getFirst().currT);
+            for (var elem : elems) {
+                elem.recordStats(deltaT);
             }
 
             // update current simulation time 
-            for (SingleChannelSMO smo : elems) {
-                smo.setCurrT(this.currT);
+            for (var elem : elems) {
+                elem.setCurrT(this.currT);
             }
 
             // process events scheduled at the current simulation time
-            for (SingleChannelSMO smo : elems) {
-                smo.processEvent();
+            for (var elem : elems) {
+                elem.processEvent();
             }
         }
     }
 
     public void clearStats() {
-        for (SingleChannelSMO smo : elems) {
-            smo.getStats().clear();
+        for (var elem : elems) {
+            elem.getStats().clear();
         } 
     }
 

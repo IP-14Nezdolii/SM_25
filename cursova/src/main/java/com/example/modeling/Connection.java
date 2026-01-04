@@ -6,7 +6,7 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 import com.example.modeling.utils.Pair;
-import com.example.modeling.utils.State;
+import com.example.modeling.utils.Status;
 
 public class Connection {
     private final Random rand = new Random();
@@ -40,7 +40,7 @@ public class Connection {
         }
 
         List<SingleChannelSMO> lst = this.next.stream()
-            .filter(elem -> elem.get0().getState().isReady() && elem.get1().get())
+            .filter(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
             .map(elem -> elem.get0())
             .toList(); 
 
@@ -73,13 +73,13 @@ public class Connection {
         this.next.add(Pair.createPair(smo, condition));
     }
 
-    public State getState() {
+    public Status getStatus() {
         return this.next.isEmpty()
-            ? State.READY
+            ? Status.READY
             : this.next.stream()
-                .anyMatch(elem -> elem.get0().getState().isReady() && elem.get1().get())
-                        ? State.READY
-                        : State.BUSY;
+                .anyMatch(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
+                        ? Status.READY
+                        : Status.BUSY;
     }
 
     public int getOutputCount() {

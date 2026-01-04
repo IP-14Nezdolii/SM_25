@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 
 import org.decimal4j.immutable.Decimal6f;
 
-import com.example.modeling.utils.State;
+import com.example.modeling.utils.Status;
 
 public class SingleChannelSMO {
     protected final Stats stats = new Stats();
@@ -20,7 +20,7 @@ public class SingleChannelSMO {
     Decimal6f currT = Decimal6f.ZERO;
     Decimal6f nextT = Decimal6f.MAX_VALUE;
 
-    State channelState = State.READY;
+    Status channelStatus = Status.READY;
 
     protected Optional<Connection> next = Optional.empty();
     protected boolean selfCheck = false;
@@ -58,7 +58,7 @@ public class SingleChannelSMO {
         }
         
         this.currT = currT;
-        if (this.channelState.isBusy() && 
+        if (this.channelStatus.isBusy() && 
             this.currT.isEqualTo(this.nextT)) {
 
             this.setDoneStatus();
@@ -69,36 +69,35 @@ public class SingleChannelSMO {
     /*
      * returns the status that determines the choice of process() call
      */
-    public State getState() {
+    public Status getStatus() {
         // checks if the object is calling process() on itself
         if (this.selfCheck) {
-            return State.READY;
+            return Status.READY;
         }
 
         if (this.maxQueueSize > this.queueSize) {
-            return State.READY;
+            return Status.READY;
         }
 
-        return this.channelState;
+        return this.channelStatus;
     }
 
-    public State getChannelState() {
-        return this.channelState;
+    public Status getChannelStatus() {
+        return this.channelStatus;
     }
 
     public void setDoneStatus() {
-        this.channelState = State.DONE;
+        this.channelStatus = Status.DONE;
         this.nextT = Decimal6f.MAX_VALUE;
-
     }
 
     /*
      * if this.channelStatus is not READY, enqueue
      */
     public void process() {
-        if (this.channelState.isReady()) {
+        if (this.channelStatus.isReady()) {
             this.nextT = currT.add(Decimal6f.valueOf(this.delay.get()));
-            this.channelState = State.BUSY;
+            this.channelStatus = Status.BUSY;
         } else {
             if (this.maxQueueSize > this.queueSize) {
                 this.queueSize += 1;
@@ -111,19 +110,19 @@ public class SingleChannelSMO {
     }
 
     public void processEvent() {
-        switch (this.channelState) {
+        switch (this.channelStatus) {
             case BUSY: return;
             case DONE:
                 if (this.next.isPresent()) {
                     var next = this.next.get();
 
                     // if the object is calling push() on itself 
-                    // getState() returns READY
+                    // getStatus() returns READY
                     this.selfCheck = true;
 
-                    if (next.getState().isReady()) {
+                    if (next.getStatus().isReady()) {
                         this.nextT = Decimal6f.MAX_VALUE;
-                        this.channelState = State.READY;
+                        this.channelStatus = Status.READY;
 
                         next.push();
                     } else {
@@ -131,14 +130,14 @@ public class SingleChannelSMO {
                     }
                 } else {
                     this.nextT = Decimal6f.MAX_VALUE;
-                    this.channelState = State.READY;
+                    this.channelStatus = Status.READY;
                 }
             case READY:
                 if (this.queueSize > 0) {
                     this.queueSize -= 1;
 
                     this.nextT = currT.add(Decimal6f.valueOf(this.delay.get()));
-                    this.channelState = State.BUSY;
+                    this.channelStatus = Status.BUSY;
                 }
         }
 
@@ -146,8 +145,8 @@ public class SingleChannelSMO {
     }
 
     public void recordStats(Decimal6f deltaT) {
-        switch (this.channelState) {
-            case READY -> this.stats.addTotalTime(deltaT);
+        switch (this.channelStatus) {
+            case READY -> this.stats.addRestTime(deltaT);
             case DONE -> this.stats.addDeviceBlockTime(deltaT); 
             case BUSY -> this.stats.addDeviceBusyTime(deltaT);
         }
@@ -170,9 +169,10 @@ public class SingleChannelSMO {
     public class Stats {
         private double busyTime = 0;
         private double blockTime = 0;
-        private double totalSimTime = 0;
+        private double restTime = 0;
 
         private double waitQTime = 0;
+        private long maxQLen = 0;
 
         private long requests = 0;
         private long served = 0;
@@ -180,9 +180,10 @@ public class SingleChannelSMO {
         public void clear() {
             this.busyTime = 0;
             this.blockTime = 0;
-            this.totalSimTime = 0;
+            this.restTime = 0;
 
             this.waitQTime = 0;
+            this.maxQLen = 0;
             
             this.requests = 0;
             this.served = 0;
@@ -191,21 +192,15 @@ public class SingleChannelSMO {
         // Device stats
 
         public void addDeviceBusyTime(Decimal6f deltaT) {
-            double t = deltaT.doubleValue();
-
-            this.busyTime += t;
-            this.totalSimTime += t;
+            this.busyTime += deltaT.doubleValue();
         }
 
         public void addDeviceBlockTime(Decimal6f deltaT) {  
-            double t = deltaT.doubleValue();
-
-            this.blockTime += t;
-            this.totalSimTime += t;
+            this.blockTime += deltaT.doubleValue();
         }
 
-        public void addTotalTime(Decimal6f deltaT) {
-            this.totalSimTime += deltaT.doubleValue();
+        public void addRestTime(Decimal6f deltaT) {
+            this.restTime += deltaT.doubleValue();
         }
 
         public void addServed() {
@@ -214,6 +209,10 @@ public class SingleChannelSMO {
 
         public long getServed() {
             return this.served;
+        }
+
+        public long getMaxQLen() {
+            return this.maxQLen;
         }
 
         public double getBlockTime() {
@@ -225,13 +224,14 @@ public class SingleChannelSMO {
         }
 
         public double getTotalSimTime() {
-            return this.totalSimTime;
+            return this.busyTime + this.blockTime + this.restTime;
         }
 
         // Queue stats
 
         public void recordQSize(Decimal6f deltaT) {
             this.waitQTime += deltaT.doubleValue() * SingleChannelSMO.this.queueSize;
+            this.maxQLen = Math.max(this.maxQLen, SingleChannelSMO.this.queueSize);
         }
 
         public double getAverageWaitTime() {
@@ -241,8 +241,8 @@ public class SingleChannelSMO {
         }
 
         public double getAverageQueueSize() {
-            return this.totalSimTime != 0
-                    ? this.waitQTime / this.totalSimTime
+            return this.getTotalSimTime() != 0
+                    ? this.waitQTime / this.getTotalSimTime()
                     : 0;
         }
 
@@ -269,15 +269,16 @@ public class SingleChannelSMO {
             args.add(this.served);
 
             if (SingleChannelSMO.this.maxQueueSize != 0) {
-                format.append("avg_wait_time=%.3f, avg_queue_size=%.3f, ");
+                format.append("avg_wait_time=%.3f, avg_queue_size=%.3f, max_queue_size=%d, ");
                 args.add(this.getAverageWaitTime());
                 args.add(this.getAverageQueueSize());
+                args.add(this.maxQLen);
             }
 
             format.append("Device:{busy_time=%.3f, block_time=%.3f, total_time=%.3f}}");
             args.add(this.busyTime);
             args.add(this.blockTime);
-            args.add(this.totalSimTime);
+            args.add(this.getTotalSimTime());
 
             return String.format(format.toString(), args.toArray());
         }

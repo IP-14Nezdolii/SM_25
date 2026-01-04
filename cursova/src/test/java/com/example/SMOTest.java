@@ -2,7 +2,7 @@ package com.example;
 
 import com.example.modeling.Connection;
 import com.example.modeling.SingleChannelSMO;
-import com.example.modeling.utils.State;
+import com.example.modeling.utils.Status;
 import org.decimal4j.immutable.Decimal6f;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,10 +26,10 @@ class SMOTest {
 
     @Test
     void testInitialStatus() {
-        assertEquals(State.READY, this.smoWithQueue.getState());
+        assertEquals(Status.READY, this.smoWithQueue.getStatus());
         assertEquals(0, this.smoWithQueue.getStats().getRequests());
 
-        assertEquals(State.READY, this.smo.getState());
+        assertEquals(Status.READY, this.smo.getStatus());
         assertEquals(0, this.smo.getStats().getRequests());
     }
 
@@ -41,11 +41,11 @@ class SMOTest {
         assertEquals(1, this.smoWithQueue.getStats().getRequests());
         assertEquals(1, this.smo.getStats().getRequests());
         
-        assertEquals(State.BUSY, this.smoWithQueue.getChannelState());
-        assertEquals(State.BUSY, this.smo.getChannelState());
+        assertEquals(Status.BUSY, this.smoWithQueue.getChannelStatus());
+        assertEquals(Status.BUSY, this.smo.getChannelStatus());
 
-        assertEquals(State.READY, this.smoWithQueue.getState());
-        assertEquals(State.BUSY, this.smo.getState());
+        assertEquals(Status.READY, this.smoWithQueue.getStatus());
+        assertEquals(Status.BUSY, this.smo.getStatus());
     }
 
     @Test

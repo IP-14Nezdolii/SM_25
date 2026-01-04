@@ -88,56 +88,56 @@ public class BaseModelInitProducer {
             connection2.addNext(loader1, () -> {
                 int countB = 0;
 
-                if (truck1.getChannelState().isReady() && rest11.getChannelState().isDone())
+                if (truck1.getChannelStatus().isReady() && rest11.getChannelStatus().isDone())
                     countB++;
-                if (truck2.getChannelState().isReady() && rest12.getChannelState().isDone())
+                if (truck2.getChannelStatus().isReady() && rest12.getChannelStatus().isDone())
                     countB++;
-                if (truck3.getChannelState().isReady() && rest13.getChannelState().isDone())
+                if (truck3.getChannelStatus().isReady() && rest13.getChannelStatus().isDone())
                     countB++;
-                if (truck4.getChannelState().isReady() && rest14.getChannelState().isDone())
+                if (truck4.getChannelStatus().isReady() && rest14.getChannelStatus().isDone())
                     countB++;
 
-                if (loader2.getChannelState().isBusy())
+                if (loader2.getChannelStatus().isBusy())
                     countB--;
 
-                return countB > 0 && rest1.getChannelState().isDone();
+                return countB > 0 && rest1.getChannelStatus().isDone();
             });
 
             connection2.addNext(loader2, () -> {
                 int countB = 0;
 
-                if (truck1.getChannelState().isReady() && rest11.getChannelState().isDone())
+                if (truck1.getChannelStatus().isReady() && rest11.getChannelStatus().isDone())
                     countB++;
-                if (truck2.getChannelState().isReady() && rest12.getChannelState().isDone())
+                if (truck2.getChannelStatus().isReady() && rest12.getChannelStatus().isDone())
                     countB++;
-                if (truck3.getChannelState().isReady() && rest13.getChannelState().isDone())
+                if (truck3.getChannelStatus().isReady() && rest13.getChannelStatus().isDone())
                     countB++;
-                if (truck4.getChannelState().isReady() && rest14.getChannelState().isDone())
+                if (truck4.getChannelStatus().isReady() && rest14.getChannelStatus().isDone())
                     countB++;
 
-                if (loader1.getChannelState().isBusy())
+                if (loader1.getChannelStatus().isBusy())
                     countB--;
 
-                return countB > 0 && rest2.getChannelState().isDone();
+                return countB > 0 && rest2.getChannelStatus().isDone();
             });
 
             loader1.setNext(connection3);
             loader2.setNext(connection3);
 
             connection3.addNext(truck1, () -> {
-                return rest11.getChannelState().isDone();
+                return rest11.getChannelStatus().isDone();
             });
 
             connection3.addNext(truck2, () -> {
-                return rest12.getChannelState().isDone();
+                return rest12.getChannelStatus().isDone();
             });
 
             connection3.addNext(truck3, () -> {
-                return rest13.getChannelState().isDone();
+                return rest13.getChannelStatus().isDone();
             });
 
             connection3.addNext(truck4, () -> {
-                return rest14.getChannelState().isDone();
+                return rest14.getChannelStatus().isDone();
             });
 
             truck1.setNext(connection4);
@@ -147,27 +147,27 @@ public class BaseModelInitProducer {
 
             Connection restCon1 = new Connection();
             rest1.setNext(restCon1);
-            restCon1.addNext(rest1, () -> loader1.getChannelState().isDone());
+            restCon1.addNext(rest1, () -> loader1.getChannelStatus().isDone());
 
             Connection restCon2 = new Connection();
             rest2.setNext(restCon2);
-            restCon2.addNext(rest2, () -> loader2.getChannelState().isDone());
+            restCon2.addNext(rest2, () -> loader2.getChannelStatus().isDone());
 
             Connection restCon11 = new Connection();
             rest11.setNext(restCon11);
-            restCon11.addNext(rest11, () -> truck1.getChannelState().isDone());
+            restCon11.addNext(rest11, () -> truck1.getChannelStatus().isDone());
 
             Connection restCon12 = new Connection();
             rest12.setNext(restCon12);
-            restCon12.addNext(rest12, () -> truck2.getChannelState().isDone());
+            restCon12.addNext(rest12, () -> truck2.getChannelStatus().isDone());
 
             Connection restCon13 = new Connection();
             rest13.setNext(restCon13);
-            restCon13.addNext(rest13, () -> truck3.getChannelState().isDone());
+            restCon13.addNext(rest13, () -> truck3.getChannelStatus().isDone());
 
             Connection restCon14 = new Connection();
             rest14.setNext(restCon14);
-            restCon14.addNext(rest14, () -> truck4.getChannelState().isDone());
+            restCon14.addNext(rest14, () -> truck4.getChannelStatus().isDone());
 
             list.add(producer);
             list.add(smoWithQueue);

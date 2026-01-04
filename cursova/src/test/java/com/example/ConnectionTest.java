@@ -2,7 +2,7 @@ package com.example;
 
 import com.example.modeling.Connection;
 import com.example.modeling.SingleChannelSMO;
-import com.example.modeling.utils.State;
+import com.example.modeling.utils.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,8 +34,8 @@ class ConnectionTest {
 
     @Test
     void testStateEmptyNext() {
-        assertEquals(State.READY, connection.getState());
-        assertEquals(State.READY, groupConnection.getState());
+        assertEquals(Status.READY, connection.getStatus());
+        assertEquals(Status.READY, groupConnection.getStatus());
 
         connection.push();
 
@@ -43,10 +43,10 @@ class ConnectionTest {
         groupConnection.push();
 
         assertEquals(1, connection.getOutputCount());
-        assertEquals(State.READY, connection.getState());
+        assertEquals(Status.READY, connection.getStatus());
 
         assertEquals(1, groupConnection.getOutputCount());
-        assertEquals(State.READY, groupConnection.getState());
+        assertEquals(Status.READY, groupConnection.getStatus());
     }
 
     @Test
@@ -57,8 +57,8 @@ class ConnectionTest {
         connection.addNext(target1);
         groupConnection.addNext(target2);
         
-        assertEquals(State.READY, connection.getState());
-        assertEquals(State.READY, groupConnection.getState());
+        assertEquals(Status.READY, connection.getStatus());
+        assertEquals(Status.READY, groupConnection.getStatus());
 
         connection.push();
 
@@ -66,14 +66,14 @@ class ConnectionTest {
         groupConnection.push();
 
         assertEquals(1, connection.getOutputCount());
-        assertEquals(State.BUSY, target1.getState());
-        assertEquals(State.BUSY, connection.getState());
+        assertEquals(Status.BUSY, target1.getStatus());
+        assertEquals(Status.BUSY, connection.getStatus());
 
         assertThrows(IllegalStateException.class, () -> connection.push());
 
         assertEquals(1, groupConnection.getOutputCount());
-        assertEquals(State.BUSY, target2.getState());
-        assertEquals(State.BUSY, groupConnection.getState());
+        assertEquals(Status.BUSY, target2.getStatus());
+        assertEquals(Status.BUSY, groupConnection.getStatus());
         
         assertThrows(IllegalStateException.class, () -> groupConnection.push());
     }
@@ -99,9 +99,9 @@ class ConnectionTest {
         sink.processEvent();
         source.processEvent();
 
-        assertEquals(State.READY, source.getState());
+        assertEquals(Status.READY, source.getStatus());
         assertEquals(1, sink.getStats().getRequests());
-        assertEquals(State.BUSY, sink.getState());
+        assertEquals(Status.BUSY, sink.getStatus());
     }
 
     @Test

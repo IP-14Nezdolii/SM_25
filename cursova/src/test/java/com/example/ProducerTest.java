@@ -1,7 +1,7 @@
 package com.example;
 
 import com.example.modeling.Producer;
-import com.example.modeling.utils.State;
+import com.example.modeling.utils.Status;
 import org.decimal4j.immutable.Decimal6f;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ class ProducerTest {
 
     @Test
     void testInitialStatus() {
-        assertEquals(State.BUSY,  this.producer.getState());
+        assertEquals(Status.BUSY,  this.producer.getStatus());
         assertEquals(1,  this.producer.getStats().getRequests());
     }
 
