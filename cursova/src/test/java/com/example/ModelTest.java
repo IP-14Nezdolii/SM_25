@@ -148,11 +148,11 @@ public class ModelTest {
 
 
 		SingleChannelSMO rest1 = new SingleChannelSMO(
-			"Rest1", FunRand.getFixed(5), 5);
+			"Rest1", FunRand.getFixed(5), 6);
 		rest1.setDoneStatus();
 
 		SingleChannelSMO rest2 = new SingleChannelSMO(
-			"Rest2", FunRand.getFixed(5), 5);
+			"Rest2", FunRand.getFixed(5), 6);
 		rest2.setDoneStatus();
 
 		SingleChannelSMO rest11 = new SingleChannelSMO(

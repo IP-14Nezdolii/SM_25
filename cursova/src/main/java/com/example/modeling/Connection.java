@@ -29,60 +29,47 @@ public class Connection {
         this(1);
     }
 
+    public int getOutputCount() {
+        return this.outputCount;
+    }
+
     public void push() {
-        if (this.next.isEmpty()) {
-            this.size++;
-            if (this.groupSize == this.size) {
-                this.size = 0;
-                this.outputCount++;
-            }
-            return;
-        }
-
-        List<SingleChannelSMO> lst = this.next.stream()
-            .filter(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
-            .map(elem -> elem.get0())
-            .toList(); 
-
-        if (lst.isEmpty()) {
-            throw new IllegalStateException("No available SMO to push the item");
-        }
-
         this.size++;
-        if (this.groupSize == this.size) {
-            this.size = 0;
-            lst.get(rand.nextInt(lst.size())).process();
 
+        if (this.size == this.groupSize) {
+            this.size = 0;
+
+            if (!this.next.isEmpty()) {
+                List<SingleChannelSMO> lst = this.next.stream()
+                        .filter(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
+                        .map(elem -> elem.get0())
+                        .toList();
+
+                if (lst.isEmpty()) {
+                    throw new IllegalStateException("No available SMO to push the item");
+                }
+
+                lst.get(rand.nextInt(lst.size())).process();
+            }
+            
             this.outputCount++;
         }
     }
 
     public void addNext(SingleChannelSMO smo) {
-        if (smo == null) {
-            throw new IllegalArgumentException("SMO must be not null");
-        }
-
         this.next.add(Pair.createPair(smo, () -> true));
     }
 
     public void addNext(SingleChannelSMO smo, Supplier<Boolean> condition) {
-        if (smo == null) {
-            throw new IllegalArgumentException("SMO must be not null");
-        }
-
         this.next.add(Pair.createPair(smo, condition));
     }
 
     public Status getStatus() {
         return this.next.isEmpty()
-            ? Status.READY
-            : this.next.stream()
-                .anyMatch(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
-                        ? Status.READY
-                        : Status.BUSY;
-    }
-
-    public int getOutputCount() {
-        return this.outputCount;
+                ? Status.READY
+                : this.next.stream()
+                        .anyMatch(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
+                                ? Status.READY
+                                : Status.BUSY;
     }
 }

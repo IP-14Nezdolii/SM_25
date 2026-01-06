@@ -1,4 +1,4 @@
-package com.example.verification;
+package com.example.analysis;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,34 +30,34 @@ public class BaseModelInitProducer {
 
             SingleChannelSMO truck1 = new SingleChannelSMO(
                     "truck1", FunRand.getCombined(List.of(
-                            params[3],
-                            params[4])),
+                            params[4],
+                            params[5])),
                     4);
 
             SingleChannelSMO truck2 = new SingleChannelSMO(
                     "truck2", FunRand.getCombined(List.of(
-                            params[3],
-                            params[4])),
+                            params[4],
+                            params[5])),
                     4);
 
             SingleChannelSMO truck3 = new SingleChannelSMO(
                     "truck3", FunRand.getCombined(List.of(
-                            params[3],
-                            params[4])),
+                            params[4],
+                            params[5])),
                     4);
 
             SingleChannelSMO truck4 = new SingleChannelSMO(
                     "truck4", FunRand.getCombined(List.of(
-                            params[3],
-                            params[4])),
+                            params[4],
+                            params[5])),
                     4);
 
             SingleChannelSMO rest1 = new SingleChannelSMO(
-                    "rest1", params[5], 5);
+                    "rest1", params[3], 5);
             rest1.setDoneStatus();
 
             SingleChannelSMO rest2 = new SingleChannelSMO(
-                    "rest2", params[5], 5);
+                    "rest2", params[3], 5);
             rest2.setDoneStatus();
 
             SingleChannelSMO rest11 = new SingleChannelSMO(
@@ -208,26 +208,29 @@ public class BaseModelInitProducer {
             var rest13St = rest13.getStats();
             var rest14St = rest14.getStats();
 
-            Supplier<Long> prod_served = () -> producer.getStats().getServed();
+            Supplier<Integer> prod_served = () -> producer.getStats().getServed();
 
-            Supplier<Double> mean_q_size = () -> smoSt.getAverageQueueSize() + smoSt.getBlockTime() / smoSt.getTotalSimTime();
+            Supplier<Double> mean_q_size = () -> smoSt.getAverageQSize() + smoSt.getBlockTime() / smoSt.getTotalSimTime();
+            Supplier<Integer> max_q_size = () -> smoWithQueue.getStats().getMaxQSize();
             Supplier<Double> mean_wait_q = () -> (smoSt.getWaitQTime() + smoSt.getBlockTime()) / smoSt.getServed();
-            Supplier<Long> q_served = () -> smoWithQueue.getStats().getServed();
+            
 
-            Supplier<Double> m_loader_util = () -> (
-                loader1St.getBusyTime() + loader2St.getBusyTime() + 
-                rest1St.getBusyTime() + rest2St.getBusyTime()) /
-                2 / loader1St.getTotalSimTime();
-            Supplier<Double> mean_loader_q_size = () -> m_loader_util.get() * 2;
+            Supplier<Integer> loader1_served = () -> loader1St.getServed();
+            Supplier<Integer> loader2_served = () -> loader2St.getServed();
+            Supplier<Double> mean_loader_q_size = () -> 2 - 
+                (loader1St.getBusyTime() + loader2St.getBusyTime() + 
+                rest1St.getBusyTime() + rest2St.getBusyTime()) / 
+                loader1St.getTotalSimTime();
             Supplier<Double> mean_loader_wait_q = () -> mean_loader_q_size.get() * 
                 loader1St.getTotalSimTime() / 
                 (loader1St.getServed() + loader2St.getServed());
 
-            Supplier<Double> m_truck_util = () -> ((truck1St.getBusyTime() + truck2St.getBusyTime() + truck3St.getBusyTime() + truck4St.getBusyTime()) +
-                        (rest11St.getBusyTime() + rest12St.getBusyTime() + rest13St.getBusyTime() + rest14St.getBusyTime()) +
-                        (loader1St.getBusyTime() + loader2St.getBusyTime())) /
-                        4 / (truck1St.getTotalSimTime());
-            Supplier<Double> mean_truck_q_size = () -> (1.0 - m_truck_util.get()) * 4;
+       
+            Supplier<Double> mean_truck_q_size = () -> 4 -
+                ((truck1St.getBusyTime() + truck2St.getBusyTime() + truck3St.getBusyTime() + truck4St.getBusyTime()) +
+                (rest11St.getBusyTime() + rest12St.getBusyTime() + rest13St.getBusyTime() + rest14St.getBusyTime()) +
+                (loader1St.getBusyTime() + loader2St.getBusyTime())) /
+                (truck1St.getTotalSimTime());
             Supplier<Double> mean_truck_wait_q = () -> mean_truck_q_size.get() * 
                 loader1St.getTotalSimTime() / 
                 connection4.getOutputCount();
@@ -248,14 +251,14 @@ public class BaseModelInitProducer {
                 prod_served,
 
                 mean_q_size,
+                max_q_size,
                 mean_wait_q,
-                q_served,
-
-                m_loader_util,
+                
+                loader1_served,
+                loader2_served,
                 mean_loader_q_size,
                 mean_loader_wait_q,
 
-                m_truck_util,
                 mean_truck_q_size,
                 mean_truck_wait_q,
 

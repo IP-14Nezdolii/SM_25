@@ -23,7 +23,7 @@ public class SingleChannelSMO {
     Status channelStatus = Status.READY;
 
     protected Optional<Connection> next = Optional.empty();
-    protected boolean selfCheck = false;
+    private boolean selfCheck = false;
 
     public SingleChannelSMO(String name, int maxQueueSize, Supplier<Double> rand, int eventProcessPriority) {
         if (maxQueueSize < 0) {
@@ -146,9 +146,9 @@ public class SingleChannelSMO {
 
     public void recordStats(Decimal6f deltaT) {
         switch (this.channelStatus) {
-            case READY -> this.stats.addRestTime(deltaT);
-            case DONE -> this.stats.addDeviceBlockTime(deltaT); 
-            case BUSY -> this.stats.addDeviceBusyTime(deltaT);
+            case READY -> this.stats.addReadyTime(deltaT);
+            case DONE -> this.stats.addBlockTime(deltaT); 
+            case BUSY -> this.stats.addBusyTime(deltaT);
         }
 
         this.stats.recordQSize(deltaT);
@@ -169,21 +169,21 @@ public class SingleChannelSMO {
     public class Stats {
         private double busyTime = 0;
         private double blockTime = 0;
-        private double restTime = 0;
+        private double readyTime = 0;
 
         private double waitQTime = 0;
-        private long maxQLen = 0;
+        private int maxQSize = 0;
 
-        private long requests = 0;
-        private long served = 0;
+        private int requests = 0;
+        private int served = 0;
 
         public void clear() {
             this.busyTime = 0;
             this.blockTime = 0;
-            this.restTime = 0;
+            this.readyTime = 0;
 
             this.waitQTime = 0;
-            this.maxQLen = 0;
+            this.maxQSize = 0;
             
             this.requests = 0;
             this.served = 0;
@@ -191,28 +191,24 @@ public class SingleChannelSMO {
 
         // Device stats
 
-        public void addDeviceBusyTime(Decimal6f deltaT) {
+        public void addBusyTime(Decimal6f deltaT) {
             this.busyTime += deltaT.doubleValue();
         }
 
-        public void addDeviceBlockTime(Decimal6f deltaT) {  
+        public void addBlockTime(Decimal6f deltaT) {  
             this.blockTime += deltaT.doubleValue();
         }
 
-        public void addRestTime(Decimal6f deltaT) {
-            this.restTime += deltaT.doubleValue();
+        public void addReadyTime(Decimal6f deltaT) {
+            this.readyTime += deltaT.doubleValue();
         }
 
         public void addServed() {
             this.served += 1;
         }
 
-        public long getServed() {
+        public int getServed() {
             return this.served;
-        }
-
-        public long getMaxQLen() {
-            return this.maxQLen;
         }
 
         public double getBlockTime() {
@@ -224,14 +220,26 @@ public class SingleChannelSMO {
         }
 
         public double getTotalSimTime() {
-            return this.busyTime + this.blockTime + this.restTime;
+            return this.busyTime + this.blockTime + this.readyTime;
+        }
+
+        public int getRequests() {
+            return this.requests;
+        }
+
+        public void addRequest() {
+            this.requests += 1;
         }
 
         // Queue stats
 
         public void recordQSize(Decimal6f deltaT) {
             this.waitQTime += deltaT.doubleValue() * SingleChannelSMO.this.queueSize;
-            this.maxQLen = Math.max(this.maxQLen, SingleChannelSMO.this.queueSize);
+            this.maxQSize = Math.max(this.maxQSize, SingleChannelSMO.this.queueSize);
+        }
+
+        public int getMaxQSize() {
+            return this.maxQSize;
         }
 
         public double getAverageWaitTime() {
@@ -240,18 +248,11 @@ public class SingleChannelSMO {
                     : 0;
         }
 
-        public double getAverageQueueSize() {
-            return this.getTotalSimTime() != 0
-                    ? this.waitQTime / this.getTotalSimTime()
+        public double getAverageQSize() {
+            double totalSimTime = this.getTotalSimTime();
+            return totalSimTime != 0
+                    ? this.waitQTime / totalSimTime
                     : 0;
-        }
-
-        public long getRequests() {
-            return this.requests;
-        }
-
-        public void addRequest() {
-            this.requests += 1;
         }
 
         public double getWaitQTime() {
@@ -271,8 +272,8 @@ public class SingleChannelSMO {
             if (SingleChannelSMO.this.maxQueueSize != 0) {
                 format.append("avg_wait_time=%.3f, avg_queue_size=%.3f, max_queue_size=%d, ");
                 args.add(this.getAverageWaitTime());
-                args.add(this.getAverageQueueSize());
-                args.add(this.maxQLen);
+                args.add(this.getAverageQSize());
+                args.add(this.maxQSize);
             }
 
             format.append("Device:{busy_time=%.3f, block_time=%.3f, total_time=%.3f}}");

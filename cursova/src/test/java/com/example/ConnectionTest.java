@@ -27,9 +27,6 @@ class ConnectionTest {
     void testValidation() {
         assertThrows(IllegalArgumentException.class, () -> new Connection(0), "Group size must be > 0");
         assertThrows(IllegalArgumentException.class, () -> new Connection(-5));
-
-        assertThrows(IllegalArgumentException.class, () -> connection.addNext(null));
-        assertThrows(IllegalArgumentException.class, () -> connection.addNext(null, () -> true));
     }
 
     @Test
@@ -74,8 +71,6 @@ class ConnectionTest {
         assertEquals(1, groupConnection.getOutputCount());
         assertEquals(Status.BUSY, target2.getStatus());
         assertEquals(Status.BUSY, groupConnection.getStatus());
-        
-        assertThrows(IllegalStateException.class, () -> groupConnection.push());
     }
 
     @Test
