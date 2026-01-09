@@ -72,7 +72,6 @@ public class FunRand {
 
         double kReal = (mean * mean) / var;
         final int k = Math.max(1, (int) Math.round(kReal));
-
         final double lam = (double) k / mean;
 
         return () -> {

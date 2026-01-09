@@ -33,6 +33,10 @@ public class Connection {
         return this.outputCount;
     }
 
+    public void clearStats() {
+        this.outputCount = 0;
+    }
+
     public void push() {
         this.size++;
 
@@ -51,7 +55,7 @@ public class Connection {
 
                 lst.get(rand.nextInt(lst.size())).process();
             }
-            
+
             this.outputCount++;
         }
     }
@@ -65,11 +69,16 @@ public class Connection {
     }
 
     public Status getStatus() {
-        return this.next.isEmpty()
-                ? Status.READY
-                : this.next.stream()
-                        .anyMatch(elem -> elem.get0().getStatus().isReady() && elem.get1().get())
-                                ? Status.READY
-                                : Status.BUSY;
+        if (this.next.isEmpty()) {
+            return Status.READY;
+        }
+
+        for (var elem : this.next) {
+            if (elem.get0().getStatus().isReady() && elem.get1().get()) {
+                return Status.READY;
+            }
+        }
+
+        return Status.BUSY;
     }
 }

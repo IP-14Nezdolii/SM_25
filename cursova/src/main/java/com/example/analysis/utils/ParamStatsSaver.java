@@ -1,4 +1,4 @@
-package com.example.analysis;
+package com.example.analysis.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,13 +11,14 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.example.analysis.modelInit.ParamResultCalculator;
 import com.example.modeling.utils.Pair;
 
-public class StatsSaver {
+public class ParamStatsSaver {
     private final String filename;
-    private final ArrayList<Pair<ResultCalculator, Integer>> statsBuffer = new ArrayList<>();
+    private final ArrayList<Pair<ParamResultCalculator, Integer>> statsBuffer = new ArrayList<>();
 
-    public StatsSaver(String filename) {
+    public ParamStatsSaver(String filename) {
         this.filename = filename;
 
         this.deleteFile();
@@ -52,11 +53,11 @@ public class StatsSaver {
         }
     }
 
-    public void addStats(ResultCalculator stat, int testMask) {
-        this.statsBuffer.add(Pair.createPair(stat, testMask));
+    public void addStats(ParamResultCalculator stat, int mask) {
+        this.statsBuffer.add(new Pair<ParamResultCalculator,Integer>(stat, mask));
     }
 
-    public void addStats(ArrayList<Pair<ResultCalculator, Integer>> buff) {
+    public void addStats(ArrayList<Pair<ParamResultCalculator, Integer>> buff) {
         this.statsBuffer.addAll(buff);
     }
 
@@ -92,53 +93,60 @@ public class StatsSaver {
 
     private void createHeaderRow(Sheet sheet) {
         Row row = sheet.createRow(0);
-        row.createCell(0).setCellValue("test_mask");
 
-        row.createCell(1).setCellValue("prod_served");
+        row.createCell(0).setCellValue("mask");
 
-        row.createCell(2).setCellValue("mean_q_size");
-        row.createCell(3).setCellValue("max_q_size");
-        row.createCell(4).setCellValue("mean_wait_q");
+        row.createCell(1).setCellValue("buldozerNum");
+        row.createCell(2).setCellValue("loader1Num");
+        row.createCell(3).setCellValue("loader2Num");
+        row.createCell(4).setCellValue("truckNum");
 
-        row.createCell(5).setCellValue("loader1_served");
-        row.createCell(6).setCellValue("loader2_served");
-        row.createCell(7).setCellValue("mean_loader_q_size");
-        row.createCell(8).setCellValue("mean_loader_wait_q");
+        row.createCell(5).setCellValue("prod_served");
 
-        row.createCell(9).setCellValue("mean_truck_q_size");
-        row.createCell(10).setCellValue("mean_truck_wait_q");
+        row.createCell(6).setCellValue("mean_q_size");
+        row.createCell(7).setCellValue("max_q_size");
+        row.createCell(8).setCellValue("mean_wait_q");
 
-        row.createCell(11).setCellValue("productivity");
-        row.createCell(12).setCellValue("processing_time");
+        row.createCell(9).setCellValue("mean_loader_q_size");
+        row.createCell(10).setCellValue("mean_loader_wait_q");
+
+        row.createCell(11).setCellValue("mean_truck_q_size");
+        row.createCell(12).setCellValue("mean_truck_wait_q");
+
+        row.createCell(13).setCellValue("productivity");
+        row.createCell(14).setCellValue("processing_time");
     }
 
     private void writeBufferToSheet(Sheet sheet, int startRowIndex) {
         int currentRowIndex = startRowIndex;
 
-        for (Pair<ResultCalculator, Integer> pair : statsBuffer) {
-            ResultCalculator data = pair.get0();
-            int testMask = pair.get1();
+        for (var st : statsBuffer) {
+            int mask = st.get1();
+            var data = st.get0();
 
             Row row = sheet.createRow(currentRowIndex++);
 
-            row.createCell(0).setCellValue(testMask);
+            row.createCell(0).setCellValue(mask);
 
-            row.createCell(1).setCellValue(data.prod_served().get());
+            row.createCell(1).setCellValue(data.buldozerNum());
+            row.createCell(2).setCellValue(data.loader1Num());
+            row.createCell(3).setCellValue(data.loader2Num());
+            row.createCell(4).setCellValue(data.truckNum());
 
-            row.createCell(2).setCellValue(data.mean_q_size().get());
-            row.createCell(3).setCellValue(data.max_q_size().get());
-            row.createCell(4).setCellValue(data.mean_wait_q().get());
+            row.createCell(5).setCellValue(data.prod_served().get());
 
-            row.createCell(5).setCellValue(data.loader1_served().get());
-            row.createCell(6).setCellValue(data.loader2_served().get());
-            row.createCell(7).setCellValue(data.mean_loader_q_size().get());
-            row.createCell(8).setCellValue(data.mean_loader_wait_q().get());
+            row.createCell(6).setCellValue(data.mean_q_size().get());
+            row.createCell(7).setCellValue(data.max_q_size().get());
+            row.createCell(8).setCellValue(data.mean_wait_q().get());
 
-            row.createCell(9).setCellValue(data.mean_truck_q_size().get());
-            row.createCell(10).setCellValue(data.mean_truck_wait_q().get());
+            row.createCell(9).setCellValue(data.mean_loader_q_size().get());
+            row.createCell(10).setCellValue(data.mean_loader_wait_q().get());
 
-            row.createCell(11).setCellValue(data.productivity().get());
-            row.createCell(12).setCellValue(data.processing_time().get());
+            row.createCell(11).setCellValue(data.mean_truck_q_size().get());
+            row.createCell(12).setCellValue(data.mean_truck_wait_q().get());
+
+            row.createCell(13).setCellValue(data.productivity().get());
+            row.createCell(14).setCellValue(data.processing_time().get());
         }
     }
 }

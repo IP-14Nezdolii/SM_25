@@ -110,38 +110,40 @@ public class SingleChannelSMO {
     }
 
     public void processEvent() {
-        switch (this.channelStatus) {
-            case BUSY: return;
-            case DONE:
-                if (this.next.isPresent()) {
-                    var next = this.next.get();
+        if (!this.channelStatus.isDone()) 
+            return;
 
-                    // if the object is calling push() on itself 
-                    // getStatus() returns READY
-                    this.selfCheck = true;
+        if (this.next.isPresent()) {
+            var next = this.next.get();
 
-                    if (next.getStatus().isReady()) {
-                        this.nextT = Decimal6f.MAX_VALUE;
-                        this.channelStatus = Status.READY;
+            // if the object is calling push() on itself 
+            // getStatus() returns READY
+            this.selfCheck = true;
 
-                        next.push();
-                    } else {
-                        break;
-                    }
-                } else {
-                    this.nextT = Decimal6f.MAX_VALUE;
-                    this.channelStatus = Status.READY;
-                }
-            case READY:
-                if (this.queueSize > 0) {
-                    this.queueSize -= 1;
+            if (next.getStatus().isReady()) {
+                this.nextT = Decimal6f.MAX_VALUE;
+                this.channelStatus = Status.READY;
 
-                    this.nextT = currT.add(Decimal6f.valueOf(this.delay.get()));
-                    this.channelStatus = Status.BUSY;
-                }
+                next.push();
+            } else {
+                // channel remains blocked
+                this.selfCheck = false;
+                return;
+            }
+
+            this.selfCheck = false;
+        } else {
+            this.nextT = Decimal6f.MAX_VALUE;
+            this.channelStatus = Status.READY;
         }
 
-        this.selfCheck = false;
+        // channel is READY
+        if (this.queueSize > 0) {
+            this.queueSize -= 1;
+
+            this.nextT = currT.add(Decimal6f.valueOf(this.delay.get()));
+            this.channelStatus = Status.BUSY;
+        }
     }
 
     public void recordStats(Decimal6f deltaT) {
@@ -187,6 +189,8 @@ public class SingleChannelSMO {
             
             this.requests = 0;
             this.served = 0;
+
+            SingleChannelSMO.this.next.ifPresent((next) -> next.clearStats());
         }
 
         // Device stats

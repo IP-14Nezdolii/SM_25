@@ -1,4 +1,4 @@
-package com.example.analysis;
+package com.example.analysis.modelInit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,67 +13,67 @@ import com.example.modeling.utils.Pair;
 
 public class BaseModelInitProducer {
 
-    public static Supplier<Pair<Model, ResultCalculator>> getModelInit(Supplier<Double>[] params) {
+    public static Supplier<Pair<Model, BaseResultCalculator>> getModelInit(Supplier<Double>[] vars) {
         return () -> {
             ArrayList<SingleChannelSMO> list = new ArrayList<>();
 
             SingleChannelSMO producer = new Producer(
-                    "prod1", params[0], 1);
+                    "prod1", vars[0], 1);
 
             SingleChannelSMO smoWithQueue = new SingleChannelSMO(
                     "q_smo", Integer.MAX_VALUE, FunRand.getFixed(0), 2);
 
             SingleChannelSMO loader1 = new SingleChannelSMO(
-                    "loader1", params[1], 3);
+                    "loader1", vars[1], 3);
             SingleChannelSMO loader2 = new SingleChannelSMO(
-                    "loader2", params[2], 3);
+                    "loader2", vars[2], 3);
 
             SingleChannelSMO truck1 = new SingleChannelSMO(
                     "truck1", FunRand.getCombined(List.of(
-                            params[4],
-                            params[5])),
+                            vars[4],
+                            vars[5])),
                     4);
 
             SingleChannelSMO truck2 = new SingleChannelSMO(
                     "truck2", FunRand.getCombined(List.of(
-                            params[4],
-                            params[5])),
+                            vars[4],
+                            vars[5])),
                     4);
 
             SingleChannelSMO truck3 = new SingleChannelSMO(
                     "truck3", FunRand.getCombined(List.of(
-                            params[4],
-                            params[5])),
+                            vars[4],
+                            vars[5])),
                     4);
 
             SingleChannelSMO truck4 = new SingleChannelSMO(
                     "truck4", FunRand.getCombined(List.of(
-                            params[4],
-                            params[5])),
+                            vars[4],
+                            vars[5])),
                     4);
 
             SingleChannelSMO rest1 = new SingleChannelSMO(
-                    "rest1", params[3], 5);
+                    "rest1", vars[3], 5);
             rest1.setDoneStatus();
 
             SingleChannelSMO rest2 = new SingleChannelSMO(
-                    "rest2", params[3], 5);
+                    "rest2", vars[3], 5);
             rest2.setDoneStatus();
 
             SingleChannelSMO rest11 = new SingleChannelSMO(
-                    "rest11", params[6], 6);
+                    "rest11", vars[6], 6);
             rest11.setDoneStatus();
 
             SingleChannelSMO rest12 = new SingleChannelSMO(
-                    "rest12", params[6], 6);
+                    "rest12", vars[6], 6);
             rest12.setDoneStatus();
 
             SingleChannelSMO rest13 = new SingleChannelSMO(
-                    "rest13", params[6], 6);
+                    "rest13", vars[6], 6);
             rest13.setDoneStatus();
 
             SingleChannelSMO rest14 = new SingleChannelSMO(
-                    "rest14", params[6], 6);
+                    "rest14", vars[6], 6);
             rest14.setDoneStatus();
 
             Connection connection1 = new Connection(2);
@@ -247,7 +247,7 @@ public class BaseModelInitProducer {
                 connection4.getOutputCount();
 
             
-            ResultCalculator calc = new ResultCalculator(
+            BaseResultCalculator calc = new BaseResultCalculator(
                 prod_served,
 
                 mean_q_size,
