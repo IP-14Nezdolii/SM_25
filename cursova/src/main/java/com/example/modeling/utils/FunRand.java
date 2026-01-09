@@ -78,9 +78,9 @@ public class FunRand {
             double sum = 0.0;
 
             for (int i = 0; i < k; i++) {
-                sum += -Math.log(r.get()) / lam;
+                sum += -Math.log(r.get()) ;
             }
-            return sum;
+            return sum / lam;
         };
     }
 }
