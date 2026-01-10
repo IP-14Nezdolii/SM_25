@@ -46,15 +46,15 @@ public class Tester {
     public static void main( String[] args )
     {
         verificationTest();
-        // transPeriodTest();
-        // resultTest();
+        transPeriodTest();
+        resultTest();
 
-        // var s = new BestModelSearcher(N_SAMPLES, TIME, TRANS_PERIOD);
-        // s.findOptimalParams();
+        var s = new BestModelSearcher(N_SAMPLES, TIME, TRANS_PERIOD);
+        s.findOptimalParams();
 
-        // transModPeriodTest();
+        transModPeriodTest();
 
-        // modTest();
+        modTest();
     }
 
     public static void verificationTest() {
