@@ -46,15 +46,15 @@ public class Tester {
     public static void main( String[] args )
     {
         verificationTest();
-        transPeriodTest();
-        resultTest();
+        // transPeriodTest();
+        // resultTest();
 
-        var s = new BestModelSearcher(N_SAMPLES, TIME, TRANS_PERIOD);
-        s.findOptimalParams();
+        // var s = new BestModelSearcher(N_SAMPLES, TIME, TRANS_PERIOD);
+        // s.findOptimalParams();
 
-        transModPeriodTest();
+        // transModPeriodTest();
 
-        modTest();
+        // modTest();
     }
 
     public static void verificationTest() {
@@ -97,7 +97,9 @@ public class Tester {
         vars8[2] = FunRand.getExponential(24);
 
         Supplier<Double>[] vars9 = defaultVars.clone();
-        vars9[0] = FunRand.getErlang(4, 16);
+        vars9[4] = FunRand.getNotNullNorm(44, 10);
+        vars9[5] = FunRand.getUniform(4, 16);
+        vars9[6] = FunRand.getNotNullNorm(36, 10);
 
 
         var lst = List.of(
